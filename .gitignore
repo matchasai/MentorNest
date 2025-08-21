@@ -1,0 +1,28 @@
+# Frontend (Node)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.eslintcache
+frontend/.env*
+
+# Backend (Java)
+backend/target/
+backend/.idea/
+backend/*.iml
+backend/.classpath
+backend/.project
+backend/.settings/
+
+# OS/Editor
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp
+
+# Logs
+logs/
+*.log
+
+# Env
+.env
+*.local
