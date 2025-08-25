@@ -2,14 +2,9 @@ services:
   - type: web
     name: mentornest
     runtime: docker
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
+    dockerfilePath: Dockerfile
     plan: free
     healthCheckPath: /api/health
-    autoDeploy: false
-    buildCommand: ""
-    startCommand: ""
-    rootDir: .
     envVars:
       - key: DATABASE_URL
         sync: false

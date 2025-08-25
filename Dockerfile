@@ -10,18 +10,14 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: Build Backend
-FROM openjdk:17-jdk-slim as backend-build
+FROM maven:3.9.4-openjdk-17-slim as backend-build
 
 WORKDIR /app
-COPY backend/mvnw backend/mvnw.cmd backend/pom.xml ./
-COPY backend/.mvn ./.mvn
+COPY backend/pom.xml ./
 COPY backend/src ./src
 
-# Make mvnw executable
-RUN chmod +x ./mvnw
-
 # Build the application
-RUN ./mvnw clean package -DskipTests
+RUN mvn clean package -DskipTests
 
 # Stage 3: Runtime
 FROM openjdk:17-jdk-slim
