@@ -1,5 +1,5 @@
 # Multi-stage build for MentorNest
-# Stage 1: Build Frontend
+# Stage 1: Build Frontend  
 FROM node:18-alpine as frontend-build
 
 WORKDIR /frontend
@@ -10,9 +10,21 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: Build Backend
-FROM maven:3.9.4-openjdk-17-slim as backend-build
+FROM openjdk:17-jdk-slim as backend-build
 
 WORKDIR /app
+
+# Install Maven
+RUN apt-get update && \
+    apt-get install -y wget && \
+    wget https://downloads.apache.org/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.tar.gz && \
+    tar -xzf apache-maven-3.8.6-bin.tar.gz && \
+    mv apache-maven-3.8.6 /opt/maven && \
+    rm apache-maven-3.8.6-bin.tar.gz && \
+    apt-get clean
+
+ENV PATH="/opt/maven/bin:${PATH}"
+
 COPY backend/pom.xml ./
 COPY backend/src ./src
 

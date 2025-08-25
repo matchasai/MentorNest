@@ -1,14 +1,13 @@
-# Docker ignore - only include what we need for multi-stage build
+# Docker ignore for MentorNest
 .git
 .gitignore
-README.md
 *.md
 .vscode
 .DS_Store
 *.log
+node_modules
+.env*
 
-# Keep backend and frontend for Docker multi-stage build
+# Keep build essentials
 !backend/
 !frontend/
-!Dockerfile
-!render.yaml
