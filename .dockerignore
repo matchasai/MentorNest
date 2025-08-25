@@ -7,8 +7,8 @@ README.md
 .DS_Store
 *.log
 
-# Keep backend and client for Docker multi-stage build
+# Keep backend and frontend for Docker multi-stage build
 !backend/
-!client/
+!frontend/
 !Dockerfile
 !render.yaml

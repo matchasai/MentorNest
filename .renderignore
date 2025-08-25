@@ -2,19 +2,19 @@
 # Frontend will be built inside Docker container only
 
 # Ignore all package.json files to prevent Node.js auto-detection
-client/package.json
-client/package-lock.json
+frontend/package.json
+frontend/package-lock.json
 package.json
 package-lock.json
-client/node_modules/
+frontend/node_modules/
 node_modules/
-client/.env*
-client/dist/
-client/vite.config.js
+frontend/.env*
+frontend/dist/
+frontend/vite.config.js
 vite.config.js
-client/tailwind.config.js
-client/postcss.config.js
-client/eslint.config.js
+frontend/tailwind.config.js
+frontend/postcss.config.js
+frontend/eslint.config.js
 
 # Development files
 .git/
