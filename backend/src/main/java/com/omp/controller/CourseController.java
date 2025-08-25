@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.omp.dto.CourseDTO;
 import com.omp.dto.ModuleDTO;
 import com.omp.service.CourseService;
-import com.omp.service.FileStorageService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 public class CourseController {
     private static final Logger logger = LoggerFactory.getLogger(CourseController.class);
     private final CourseService courseService;
-    private final FileStorageService fileStorageService;
 
     @GetMapping
     public List<CourseDTO> getAllCourses() {
