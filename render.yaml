@@ -2,7 +2,7 @@ services:
   - type: web
     name: mentornest
     runtime: docker
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./Dockerfile-single
     plan: free
     healthCheckPath: /api/health
     envVars:
