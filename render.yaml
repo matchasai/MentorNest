@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: mentornest
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: false
+    buildCommand: ""
+    startCommand: ""
+    rootDir: .
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_USERNAME  
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: BASE_URL
+        value: https://mentornest.onrender.com
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod

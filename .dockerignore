@@ -1,0 +1,14 @@
+# Docker ignore - only include what we need for multi-stage build
+.git
+.gitignore
+README.md
+*.md
+.vscode
+.DS_Store
+*.log
+
+# Keep backend and client for Docker multi-stage build
+!backend/
+!client/
+!Dockerfile
+!render.yaml
