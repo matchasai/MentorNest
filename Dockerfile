@@ -32,8 +32,11 @@ RUN mvn clean package -DskipTests
 # Copy frontend build to backend static resources
 RUN mkdir -p ./public && cp -r ./frontend/dist/* ./public/
 
+# Create uploads directory
+RUN mkdir -p ./uploads
+
 # Expose port
-EXPOSE 8080
+EXPOSE 8081
 
 # Run the application
-CMD ["java", "-jar", "-Dserver.port=8080", "-Dspring.profiles.active=prod", "target/backend-1.0-SNAPSHOT.jar"]
+CMD ["java", "-jar", "-Dspring.profiles.active=prod", "target/backend-1.0-SNAPSHOT.jar"]
