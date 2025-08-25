@@ -1,4 +1,5 @@
 # Simplified single-stage build for MentorNest
+# Updated to ensure proper deployment
 FROM openjdk:17-jdk-slim
 
 WORKDIR /app
