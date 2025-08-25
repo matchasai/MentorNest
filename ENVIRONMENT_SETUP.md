@@ -12,16 +12,16 @@ Go to your Railway Dashboard → Your MySQL Database Service → Variables tab a
 - `MYSQL_PASSWORD` (auto-generated password)
 
 ### 2. **Configure Render Environment Variables**
-In your new Render web service dashboard, go to Environment tab and add:
+In your new Render web service dashboard, go to Environment tab and add these EXACT values:
 
 ```bash
-# Database Configuration
-DATABASE_URL=jdbc:mysql://YOUR_RAILWAY_HOST:3306/YOUR_DATABASE_NAME?useSSL=true&serverTimezone=UTC
+# Database Configuration (Your Railway Database)
+DATABASE_URL=jdbc:mysql://crossover.proxy.rlwy.net:18015/railway?useSSL=true&serverTimezone=UTC
 DB_USERNAME=root
-DB_PASSWORD=YOUR_RAILWAY_PASSWORD
+DB_PASSWORD=dyBxNmYmVVVftyvBVlMNqULmljRVdGiM
 
 # JWT Security (Generate a secure secret!)
-JWT_SECRET=your_secure_jwt_secret_minimum_32_characters_long
+JWT_SECRET=mentornest_super_secure_jwt_secret_key_2024_production_32chars_min
 JWT_EXPIRATION=18000000
 JWT_REFRESH_EXPIRATION=604800000
 
@@ -30,21 +30,16 @@ SPRING_PROFILES_ACTIVE=prod
 SERVER_PORT=8081
 ```
 
-### 3. **Example with Real Railway Values**
+### 3. **Ready-to-Copy Values for Render**
 ```bash
-# If your Railway database shows:
-MYSQL_HOST=roundhouse.proxy.rlwy.net
-MYSQL_PORT=3306
-MYSQL_DATABASE=railway
-MYSQL_USER=root
-MYSQL_PASSWORD=abc123xyz789
-
-# Then your Render environment variables should be:
-DATABASE_URL=jdbc:mysql://roundhouse.proxy.rlwy.net:3306/railway?useSSL=true&serverTimezone=UTC
+DATABASE_URL=jdbc:mysql://crossover.proxy.rlwy.net:18015/railway?useSSL=true&serverTimezone=UTC
 DB_USERNAME=root
-DB_PASSWORD=abc123xyz789
-JWT_SECRET=my_super_secure_jwt_secret_for_production_use_32_chars_min
+DB_PASSWORD=dyBxNmYmVVVftyvBVlMNqULmljRVdGiM
+JWT_SECRET=mentornest_super_secure_jwt_secret_key_2024_production_32chars_min
+JWT_EXPIRATION=18000000
+JWT_REFRESH_EXPIRATION=604800000
 SPRING_PROFILES_ACTIVE=prod
+SERVER_PORT=8081
 ```
 
 ### 4. **Generate Secure JWT Secret**
