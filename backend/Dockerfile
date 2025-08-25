@@ -3,10 +3,10 @@
 FROM node:18-alpine as frontend-build
 
 WORKDIR /frontend
-COPY ../frontend/package*.json ./
+COPY frontend/package*.json ./
 RUN npm install
 
-COPY ../frontend/ ./
+COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: Build Backend
@@ -25,8 +25,8 @@ RUN apt-get update && \
 
 ENV PATH="/opt/maven/bin:${PATH}"
 
-COPY pom.xml ./
-COPY src ./src
+COPY backend/pom.xml ./
+COPY backend/src ./src
 
 # Build the application
 RUN mvn clean package -DskipTests
