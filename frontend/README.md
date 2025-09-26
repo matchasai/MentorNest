@@ -32,9 +32,15 @@ npm run build
 ```
 
 ## Environment
+Set the backend base URL (no trailing `/api` — the client appends `/api`).
 ```
-VITE_API_BASE_URL=http://localhost:8080/api
+# Local dev
+VITE_API_BASE_URL=http://localhost:8081
+
+# Production example
+VITE_API_BASE_URL=https://mentornest.onrender.com
 ```
+You can place these in `.env.development` and `.env.production` respectively.
 
 ## Structure
 ```

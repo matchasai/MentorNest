@@ -2,45 +2,32 @@ package com.omp.entity;
 
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Entity
-@Table(name = "mentors")
+@Document(collection = "mentors")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Mentor {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
-    private User user;
+    // Reference to User
+    private String userId;
 
-    @Column(nullable = false)
     private String expertise;
 
-    @Column(length = 1000)
     private String bio;
 
-    @Column(name = "image_url")
     private String imageUrl;
 
-    @OneToMany(mappedBy = "mentor")
-    private List<Course> courses;
+    // Optional denormalized list of course ids
+    private List<String> courseIds;
 }

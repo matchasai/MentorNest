@@ -5,14 +5,14 @@ import lombok.Data;
 
 @Data
 public class ModuleDTO {
-    private Long id;
+    private String id;
     @NotBlank
     private String title;
     @NotBlank
     private String videoUrl;
     @NotBlank
     private String summary;
-    private Long courseId;
+    private String courseId;
     private String resourceUrl;
 
     public String getResourceUrl() {

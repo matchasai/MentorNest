@@ -27,6 +27,8 @@ import lombok.RequiredArgsConstructor;
 public class CertificateService {
 
     private final FileStorageService fileStorageService;
+    private final com.omp.repository.MentorRepository mentorRepository;
+    private final com.omp.repository.UserRepository userRepository;
 
     public String generateCertificate(User user, Course course, Enrollment enrollment) {
         try {
@@ -179,10 +181,16 @@ public class CertificateService {
         int idWidth = g2d.getFontMetrics().stringWidth(certificateId);
         g2d.drawString(certificateId, (1400 - idWidth) / 2, 600);
 
-        // Add mentor name if available with better positioning
-        if (course.getMentor() != null) {
+        // Add mentor name if available
+        if (course.getMentorId() != null) {
             g2d.setFont(new Font("Arial", Font.PLAIN, 18));
-            String mentorText = "Mentor: " + course.getMentor().getUser().getName();
+            String mentorName = userRepository.findById(
+                    mentorRepository.findById(course.getMentorId())
+                            .map(m -> m.getUserId())
+                            .orElse(null))
+                    .map(u -> u.getName())
+                    .orElse("Mentor");
+            String mentorText = "Mentor: " + mentorName;
             int mentorWidth = g2d.getFontMetrics().stringWidth(mentorText);
             g2d.drawString(mentorText, (1400 - mentorWidth) / 2, 630);
         }
@@ -257,32 +265,5 @@ public class CertificateService {
         g2d.drawString(text, x - textWidth / 2, y + 5);
     }
 
-    private void drawLogo(Graphics2D g2d, int x, int y) {
-        // Draw MentorNest logo
-        g2d.setColor(new Color(59, 130, 246)); // Blue
-        g2d.setFont(new Font("Arial", Font.BOLD, 48));
-        g2d.drawString("MN", x - 30, y);
-
-        // Draw graduation cap icon
-        g2d.setColor(new Color(16, 185, 129)); // Green
-        g2d.setFont(new Font("Arial", Font.BOLD, 24));
-        g2d.drawString("🎓", x + 20, y - 10);
-    }
-
-    private void drawAchievementBadge(Graphics2D g2d, int x, int y, String text) {
-        // Draw badge background
-        g2d.setColor(new Color(147, 197, 253));
-        g2d.fillOval(x - 25, y - 25, 50, 50);
-
-        // Draw badge border
-        g2d.setColor(new Color(59, 130, 246));
-        g2d.setStroke(new java.awt.BasicStroke(2));
-        g2d.drawOval(x - 25, y - 25, 50, 50);
-
-        // Draw badge text
-        g2d.setColor(new Color(30, 58, 138));
-        g2d.setFont(new Font("Arial", Font.BOLD, 10));
-        int textWidth = g2d.getFontMetrics().stringWidth(text);
-        g2d.drawString(text, x - textWidth / 2, y + 4);
-    }
+    // Deprecated simple logo/badge methods removed in favor of enhanced versions
 }

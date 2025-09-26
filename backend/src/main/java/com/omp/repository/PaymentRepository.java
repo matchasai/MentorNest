@@ -3,21 +3,21 @@ package com.omp.repository;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import com.omp.entity.Payment;
 import com.omp.entity.Payment.PaymentStatus;
 
 @Repository
-public interface PaymentRepository extends JpaRepository<Payment, Long> {
-    List<Payment> findByUserIdAndStatus(Long userId, PaymentStatus status);
+public interface PaymentRepository extends MongoRepository<Payment, String> {
+    List<Payment> findByUserIdAndStatus(String userId, PaymentStatus status);
 
-    Optional<Payment> findByUserIdAndCourseIdAndStatus(Long userId, Long courseId, PaymentStatus status);
+    Optional<Payment> findByUserIdAndCourseIdAndStatus(String userId, String courseId, PaymentStatus status);
 
-    Optional<Payment> findByUserIdAndCourseId(Long userId, Long courseId);
+    Optional<Payment> findByUserIdAndCourseId(String userId, String courseId);
 
-    List<Payment> findByCourseId(Long courseId);
+    List<Payment> findByCourseId(String courseId);
 
-    boolean existsByUserIdAndCourseIdAndStatus(Long userId, Long courseId, PaymentStatus status);
+    boolean existsByUserIdAndCourseIdAndStatus(String userId, String courseId, PaymentStatus status);
 }

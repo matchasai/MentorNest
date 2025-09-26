@@ -20,6 +20,7 @@ import CertificateStatus from "../components/CertificateStatus";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { getMyCourses } from "../services/userService";
+import { toAbsoluteUrl } from "../utils/url";
 
 const Certificates = () => {
   const { user } = useAuth();
@@ -255,7 +256,7 @@ const Certificates = () => {
                           <div className="flex items-center gap-4 mb-4">
                             {course.imageUrl && (
                               <img
-                                src={course.imageUrl.startsWith('http') ? course.imageUrl : `http://localhost:8081${course.imageUrl}`}
+                                src={course.imageUrl.startsWith('http') ? course.imageUrl : toAbsoluteUrl(course.imageUrl)}
                                 alt={course.title}
                                 className="w-16 h-16 object-cover rounded-lg"
                                 onError={(e) => e.target.style.display = 'none'}

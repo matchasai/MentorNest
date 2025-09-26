@@ -6,9 +6,9 @@ import lombok.Data;
 
 @Data
 public class EnrollmentDTO {
-    private Long id;
-    private Long userId;
-    private Long courseId;
-    private Set<Long> completedModules;
+    private String id;
+    private String userId;
+    private String courseId;
+    private Set<String> completedModules;
     private String certificateUrl;
 }

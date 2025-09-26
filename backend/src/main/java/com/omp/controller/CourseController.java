@@ -29,12 +29,12 @@ public class CourseController {
     }
 
     @GetMapping("/{id}")
-    public CourseDTO getCourseDetails(@PathVariable Long id) {
+    public CourseDTO getCourseDetails(@PathVariable String id) {
         return courseService.getCourseDetails(id);
     }
 
     @GetMapping("/{id}/modules")
-    public List<ModuleDTO> getModuleTitles(@PathVariable Long id) {
+    public List<ModuleDTO> getModuleTitles(@PathVariable String id) {
         logger.info("Fetching modules for course ID: {}", id);
         try {
             List<ModuleDTO> modules = courseService.getModuleTitlesForCourse(id);

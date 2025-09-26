@@ -1,10 +1,13 @@
 package com.omp.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+import org.springframework.data.mongodb.repository.MongoRepository;
 
 import com.omp.entity.Course;
-import com.omp.entity.Mentor;
 
-public interface CourseRepository extends JpaRepository<Course, Long> {
-    long countByMentor(Mentor mentor);
+public interface CourseRepository extends MongoRepository<Course, String> {
+    long countByMentorId(String mentorId);
+
+    List<Course> findByMentorId(String mentorId);
 }

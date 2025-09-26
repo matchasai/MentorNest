@@ -1,32 +1,30 @@
 package com.omp.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
 import java.util.Set;
 
-@Entity
-@Table(name = "enrollments")
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Document(collection = "enrollments")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Enrollment {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    // References
+    private String userId;
 
-    @ManyToOne
-    @JoinColumn(name = "course_id", nullable = false)
-    private Course course;
+    private String courseId;
 
-    @ElementCollection
-    @CollectionTable(name = "completed_modules", joinColumns = @JoinColumn(name = "enrollment_id"))
-    @Column(name = "module_id")
-    private Set<Long> completedModules;
+    private Set<String> completedModules; // module IDs
 
     private String certificateUrl;
 }

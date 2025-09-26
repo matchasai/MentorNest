@@ -1,5 +1,6 @@
+import { toAbsoluteUrl } from "../../utils/url";
 // Admin Modules management page for MentorNest with modern UI
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { FaBook, FaFilter, FaPencilAlt, FaPlus, FaSearch, FaTimes, FaTrash } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
@@ -310,7 +311,7 @@ const AdminModules = () => {
                       const res = await api.post("/admin/modules/upload-resource", formData, {
                         headers: { "Content-Type": "multipart/form-data" }
                       });
-                      const resourceUrl = res.data.startsWith('http') ? res.data : `http://localhost:8081${res.data}`;
+                      const resourceUrl = res.data.startsWith('http') ? res.data : toAbsoluteUrl(res.data);
                       setForm({...form, resourceUrl: resourceUrl});
                       toast.success("Resource uploaded successfully!");
                     } catch (err) {

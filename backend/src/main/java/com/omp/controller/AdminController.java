@@ -58,30 +58,30 @@ public class AdminController {
     }
 
     @PutMapping("/users/{id}")
-    public UserDTO updateUser(@PathVariable Long id, @Valid @RequestBody UserDTO userDTO) {
+    public UserDTO updateUser(@PathVariable String id, @Valid @RequestBody UserDTO userDTO) {
         return adminService.updateUser(id, userDTO);
     }
 
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         adminService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/users/{id}/deactivate")
-    public ResponseEntity<Void> deactivateUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deactivateUser(@PathVariable String id) {
         adminService.deactivateUser(id);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/users/{id}/reactivate")
-    public ResponseEntity<Void> reactivateUser(@PathVariable Long id) {
+    public ResponseEntity<Void> reactivateUser(@PathVariable String id) {
         adminService.reactivateUser(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/users/{id}/reset-password")
-    public ResponseEntity<String> resetUserPassword(@PathVariable Long id, @RequestParam String newPassword) {
+    public ResponseEntity<String> resetUserPassword(@PathVariable String id, @RequestParam String newPassword) {
         String pwd = adminService.resetUserPassword(id, newPassword, passwordEncoder);
         return ResponseEntity.ok(pwd);
     }
@@ -99,14 +99,14 @@ public class AdminController {
     }
 
     @PutMapping(value = "/mentors/{id}", consumes = { "multipart/form-data" })
-    public MentorDTO updateMentor(@PathVariable Long id,
+    public MentorDTO updateMentor(@PathVariable String id,
             @RequestPart("mentor") MentorDTO mentorDTO,
             @RequestPart(value = "image", required = false) MultipartFile image) {
         return adminService.updateMentor(id, mentorDTO, image);
     }
 
     @DeleteMapping("/mentors/{id}")
-    public ResponseEntity<Void> deleteMentor(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteMentor(@PathVariable String id) {
         adminService.deleteMentor(id);
         return ResponseEntity.noContent().build();
     }
@@ -125,12 +125,12 @@ public class AdminController {
     }
 
     @PutMapping("/courses/{id}")
-    public CourseDTO updateCourse(@PathVariable Long id, @Valid @RequestBody CourseDTO courseDTO) {
+    public CourseDTO updateCourse(@PathVariable String id, @Valid @RequestBody CourseDTO courseDTO) {
         return adminService.updateCourse(id, courseDTO);
     }
 
     @DeleteMapping("/courses/{id}")
-    public ResponseEntity<Void> deleteCourse(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteCourse(@PathVariable String id) {
         adminService.deleteCourse(id);
         return ResponseEntity.noContent().build();
     }
@@ -157,24 +157,24 @@ public class AdminController {
     }
 
     @PostMapping("/courses/{courseId}/mentor/{mentorId}")
-    public ResponseEntity<Void> assignMentor(@PathVariable Long courseId, @PathVariable Long mentorId) {
+    public ResponseEntity<Void> assignMentor(@PathVariable String courseId, @PathVariable String mentorId) {
         adminService.assignMentorToCourse(courseId, mentorId);
         return ResponseEntity.ok().build();
     }
 
     // Module Management
     @PostMapping("/courses/{courseId}/modules")
-    public ModuleDTO createModule(@PathVariable Long courseId, @Valid @RequestBody ModuleDTO moduleDTO) {
+    public ModuleDTO createModule(@PathVariable String courseId, @Valid @RequestBody ModuleDTO moduleDTO) {
         return adminService.createModule(courseId, moduleDTO);
     }
 
     @PutMapping("/modules/{moduleId}")
-    public ModuleDTO updateModule(@PathVariable Long moduleId, @Valid @RequestBody ModuleDTO moduleDTO) {
+    public ModuleDTO updateModule(@PathVariable String moduleId, @Valid @RequestBody ModuleDTO moduleDTO) {
         return adminService.updateModule(moduleId, moduleDTO);
     }
 
     @DeleteMapping("/modules/{moduleId}")
-    public ResponseEntity<Void> deleteModule(@PathVariable Long moduleId) {
+    public ResponseEntity<Void> deleteModule(@PathVariable String moduleId) {
         adminService.deleteModule(moduleId);
         return ResponseEntity.noContent().build();
     }

@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MentorDTO {
-    private Long id;
+    private String id;
     private String name;
     private String email;
     private String bio;
@@ -18,7 +18,7 @@ public class MentorDTO {
     private String expertise;
     private long coursesCount;
     private long studentsCount;
-    private int experienceYears;
     private String linkedin;
     private String website;
+    private int experienceYears;
 }

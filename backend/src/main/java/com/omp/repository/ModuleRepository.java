@@ -2,22 +2,15 @@ package com.omp.repository;
 
 import java.util.List;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
 import com.omp.entity.Module;
 
-public interface ModuleRepository extends JpaRepository<Module, Long> {
+public interface ModuleRepository extends MongoRepository<Module, String> {
 
-    @Modifying
-    @Transactional
-    @Query("DELETE FROM Module m WHERE m.course.id = :courseId")
-    void deleteByCourseId(@Param("courseId") Long courseId);
+    void deleteByCourseId(String courseId);
 
-    long countByCourseId(Long courseId);
+    long countByCourseId(String courseId);
 
-    List<Module> findByCourseId(Long courseId);
+    List<Module> findByCourseId(String courseId);
 }

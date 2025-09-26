@@ -5,15 +5,21 @@ services:
     plan: free
     healthCheckPath: /api/health
     envVars:
-      - key: DATABASE_URL
-        sync: false
-      - key: DB_USERNAME  
-        sync: false
-      - key: DB_PASSWORD
+      - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
         generateValue: true
+      - key: JWT_EXPIRATION
+        value: "18000000"
+      - key: JWT_REFRESH_EXPIRATION
+        value: "604800000"
+      - key: SERVER_PORT
+        value: "8081"
       - key: BASE_URL
         value: https://mentornest.onrender.com
       - key: SPRING_PROFILES_ACTIVE
         value: prod
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false

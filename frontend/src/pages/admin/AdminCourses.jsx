@@ -1,5 +1,6 @@
+import { toAbsoluteUrl } from "../../utils/url";
 // Admin Courses management page for MentorNest with modern UI
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { FaBook, FaChalkboardTeacher, FaDollarSign } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
@@ -289,7 +290,7 @@ const AdminCourses = () => {
                 formData.append("image", file);
                 try {
                   const res = await api.post("/admin/courses/upload-image", formData, { headers: { "Content-Type": "multipart/form-data" } });
-                  const imageUrl = res.data.startsWith('http') ? res.data : `http://localhost:8081${res.data}`;
+                  const imageUrl = res.data.startsWith('http') ? res.data : toAbsoluteUrl(res.data);
                   setForm(f => ({ ...f, imageUrl: imageUrl }));
                   toast.success("Image uploaded");
                 } catch (err) {
@@ -340,7 +341,7 @@ const AdminCourses = () => {
                   <td className="py-2 px-4 text-gray-100 flex items-center gap-2">
                     {course.imageUrl && (
                       <img 
-                        src={course.imageUrl.startsWith('http') ? course.imageUrl : `http://localhost:8081${course.imageUrl}`} 
+                        src={course.imageUrl.startsWith('http') ? course.imageUrl : toAbsoluteUrl(course.imageUrl)} 
                         alt={course.title} 
                         className="w-16 h-10 object-cover rounded" 
                         style={{minWidth: '4rem'}}

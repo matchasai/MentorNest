@@ -11,7 +11,6 @@ import com.omp.repository.CourseRepository;
 import com.omp.repository.EnrollmentRepository;
 import com.omp.repository.MentorRepository;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -28,23 +27,29 @@ public class MentorService {
                 .collect(Collectors.toList());
     }
 
-    public MentorDTO getMentorById(Long id) {
+    public MentorDTO getMentorById(String id) {
         Mentor mentor = mentorRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Mentor not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Mentor not found"));
         return convertToDTO(mentor);
     }
 
     private MentorDTO convertToDTO(Mentor mentor) {
         // Count courses by this mentor
-        long coursesCount = courseRepository.countByMentor(mentor);
+        long coursesCount = courseRepository.countByMentorId(mentor.getId());
 
-        // Count distinct students enrolled in courses by this mentor
-        long studentsCount = enrollmentRepository.countDistinctStudentsByMentor(mentor);
+        // Estimate distinct students by counting enrollments in mentor's courses
+        var mentorCourses = courseRepository.findByMentorId(mentor.getId());
+        var courseIds = mentorCourses.stream().map(c -> c.getId()).toList();
+        long studentsCount = enrollmentRepository.findAll().stream()
+                .filter(e -> courseIds.contains(e.getCourseId()))
+                .map(e -> e.getUserId())
+                .distinct()
+                .count();
 
         return MentorDTO.builder()
                 .id(mentor.getId())
-                .name(mentor.getUser() != null ? mentor.getUser().getName() : "Mentor")
-                .email(mentor.getUser() != null ? mentor.getUser().getEmail() : "mentor@example.com")
+                .name("Mentor")
+                .email("mentor@example.com")
                 .bio(mentor.getBio())
                 .imageUrl(mentor.getImageUrl())
                 .expertise(mentor.getExpertise())

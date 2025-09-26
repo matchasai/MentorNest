@@ -31,9 +31,6 @@ import com.omp.repository.MentorRepository;
 import com.omp.repository.ModuleRepository;
 import com.omp.repository.UserRepository;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -48,8 +45,7 @@ public class AdminService {
     private final EnrollmentRepository enrollmentRepository;
     private final CertificateRepository certificateRepository;
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    // Removed JPA EntityManager; using Mongo repositories only
 
     // User CRUD
     public List<UserDTO> getAllUsers() {
@@ -59,7 +55,7 @@ public class AdminService {
                 .collect(Collectors.toList());
     }
 
-    public UserDTO getUser(Long id) {
+    public UserDTO getUser(String id) {
         return userRepository.findById(id).map(this::toUserDTO)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
@@ -80,7 +76,7 @@ public class AdminService {
         return toUserDTO(user);
     }
 
-    public UserDTO updateUser(Long id, UserDTO dto) {
+    public UserDTO updateUser(String id, UserDTO dto) {
         if (dto.getRole() != Role.STUDENT) {
             throw new IllegalArgumentException("Can only set role to student");
         }
@@ -92,29 +88,29 @@ public class AdminService {
         return toUserDTO(user);
     }
 
-    public void deleteUser(Long id) {
+    public void deleteUser(String id) {
         logger.info("Deleting user with id: {}", id);
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
         if (user.getRole() == Role.ADMIN) {
             throw new AccessDeniedException("Cannot delete admin users");
         }
         userRepository.deleteById(id);
     }
 
-    public void deactivateUser(Long id) {
+    public void deactivateUser(String id) {
         User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
         user.setActive(false);
         userRepository.save(user);
     }
 
-    public void reactivateUser(Long id) {
+    public void reactivateUser(String id) {
         User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
         user.setActive(true);
         userRepository.save(user);
     }
 
-    public String resetUserPassword(Long id, String newPassword, PasswordEncoder passwordEncoder) {
+    public String resetUserPassword(String id, String newPassword, PasswordEncoder passwordEncoder) {
         User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
@@ -126,7 +122,7 @@ public class AdminService {
         return mentorRepository.findAll().stream().map(this::toMentorDTO).collect(Collectors.toList());
     }
 
-    public MentorDTO getMentor(Long id) {
+    public MentorDTO getMentor(String id) {
         return mentorRepository.findById(id).map(this::toMentorDTO)
                 .orElseThrow(() -> new IllegalArgumentException("Mentor not found"));
     }
@@ -145,9 +141,10 @@ public class AdminService {
                 .password("default_password") // Or generate a random one
                 .role(Role.MENTOR)
                 .build();
+        userRepository.save(user);
 
         Mentor mentor = Mentor.builder()
-                .user(user)
+                .userId(user.getId())
                 .expertise(mentorDTO.getExpertise())
                 .bio(mentorDTO.getBio())
                 .imageUrl(imageUrl)
@@ -156,13 +153,16 @@ public class AdminService {
         return toMentorDTO(mentorRepository.save(mentor));
     }
 
-    public MentorDTO updateMentor(Long id, MentorDTO mentorDTO, MultipartFile image) {
+    public MentorDTO updateMentor(String id, MentorDTO mentorDTO, MultipartFile image) {
         Mentor mentor = mentorRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Mentor not found"));
-
-        User user = mentor.getUser();
-        user.setName(mentorDTO.getName());
-        user.setEmail(mentorDTO.getEmail());
+        if (mentor.getUserId() != null) {
+            userRepository.findById(mentor.getUserId()).ifPresent(u -> {
+                u.setName(mentorDTO.getName());
+                u.setEmail(mentorDTO.getEmail());
+                userRepository.save(u);
+            });
+        }
 
         mentor.setExpertise(mentorDTO.getExpertise());
         mentor.setBio(mentorDTO.getBio());
@@ -175,12 +175,15 @@ public class AdminService {
         return toMentorDTO(mentorRepository.save(mentor));
     }
 
-    public void deleteMentor(Long id) {
+    public void deleteMentor(String id) {
         logger.info("Deleting mentor with id: {}", id);
         Mentor mentor = mentorRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Mentor not found"));
-        if (mentor.getUser() != null && mentor.getUser().getRole() == Role.ADMIN) {
-            throw new AccessDeniedException("Cannot delete mentors with admin user");
+                .orElseThrow(() -> new IllegalArgumentException("Mentor not found"));
+        if (mentor.getUserId() != null) {
+            var user = userRepository.findById(mentor.getUserId()).orElse(null);
+            if (user != null && user.getRole() == Role.ADMIN) {
+                throw new AccessDeniedException("Cannot delete mentors with admin user");
+            }
         }
         mentorRepository.deleteById(id);
     }
@@ -199,16 +202,16 @@ public class AdminService {
 
         // Set mentor if provided
         if (courseDTO.getMentorId() != null) {
-            Mentor mentor = mentorRepository.findById(courseDTO.getMentorId())
-                    .orElseThrow(() -> new EntityNotFoundException("Mentor not found"));
-            builder.mentor(mentor);
+            mentorRepository.findById(courseDTO.getMentorId())
+                    .orElseThrow(() -> new IllegalArgumentException("Mentor not found"));
+            builder.mentorId(courseDTO.getMentorId());
         }
 
         Course course = builder.build();
         return toCourseDTO(courseRepository.save(course));
     }
 
-    public CourseDTO updateCourse(Long id, CourseDTO courseDTO) {
+    public CourseDTO updateCourse(String id, CourseDTO courseDTO) {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Course not found"));
         course.setTitle(courseDTO.getTitle());
@@ -217,38 +220,26 @@ public class AdminService {
         course.setImageUrl(courseDTO.getImageUrl());
         // Optionally update mentor if mentorId is provided
         if (courseDTO.getMentorId() != null) {
-            Mentor mentor = mentorRepository.findById(courseDTO.getMentorId()).orElse(null);
-            if (mentor != null) {
-                course.setMentor(mentor);
-            }
+            course.setMentorId(courseDTO.getMentorId());
         }
         return toCourseDTO(courseRepository.save(course));
     }
 
+    // Removed SQL-based force delete (not applicable for MongoDB)
     @Transactional
-    public void forceNativeDeleteCourse(Long id) {
-        logger.info("Force native delete for course id: {}", id);
-        entityManager.createNativeQuery("DELETE FROM courses WHERE id = ?")
-                .setParameter(1, id)
-                .executeUpdate();
-        entityManager.flush();
-        logger.info("Force native delete executed for course id: {}", id);
-    }
-
-    @Transactional
-    public void deleteCourse(Long id) {
+    public void deleteCourse(String id) {
         try {
             logger.info("Deleting course with id: {}", id);
             enrollmentRepository.deleteByCourseId(id);
             logger.info("Enrollments remaining for course {}: {}", id,
-                    enrollmentRepository.findAll().stream().filter(e -> e.getCourse().getId().equals(id)).count());
+                    enrollmentRepository.findAll().stream().filter(e -> id.equals(e.getCourseId())).count());
             certificateRepository.deleteByCourseId(id);
             logger.info("Certificates remaining for course {}: {}", id,
-                    certificateRepository.findAll().stream().filter(c -> c.getCourse().getId().equals(id)).count());
+                    certificateRepository.findAll().stream().filter(c -> id.equals(c.getCourseId())).count());
             moduleRepository.deleteByCourseId(id);
             logger.info("Modules remaining for course {}: {}", id,
-                    moduleRepository.findAll().stream().filter(m -> m.getCourse().getId().equals(id)).count());
-            forceNativeDeleteCourse(id);
+                    moduleRepository.findAll().stream().filter(m -> id.equals(m.getCourseId())).count());
+            courseRepository.deleteById(id);
             logger.info("Deleted course, modules, certificates, and related enrollments for id: {}", id);
         } catch (Exception e) {
             logger.error("Error deleting course with id {}: {}", id, e.getMessage(), e);
@@ -256,33 +247,31 @@ public class AdminService {
         }
     }
 
-    public void assignMentorToCourse(Long courseId, Long mentorId) {
+    public void assignMentorToCourse(String courseId, String mentorId) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new IllegalArgumentException("Course not found"));
-        Mentor mentor = mentorRepository.findById(mentorId)
+        mentorRepository.findById(mentorId)
                 .orElseThrow(() -> new IllegalArgumentException("Mentor not found"));
-        course.setMentor(mentor);
+        course.setMentorId(mentorId);
         courseRepository.save(course);
     }
 
     // Module Service Methods
-    public ModuleDTO createModule(Long courseId, ModuleDTO moduleDTO) {
+    public ModuleDTO createModule(String courseId, ModuleDTO moduleDTO) {
         if (courseId == null) {
             throw new IllegalArgumentException("Course ID is required to create a module");
         }
-        Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new EntityNotFoundException("Course not found"));
         Module module = Module.builder()
                 .title(moduleDTO.getTitle())
                 .videoUrl(moduleDTO.getVideoUrl())
                 .summary(moduleDTO.getSummary())
                 .resourceUrl(moduleDTO.getResourceUrl())
-                .course(course)
+                .courseId(courseId)
                 .build();
         return toModuleDTO(moduleRepository.save(module));
     }
 
-    public ModuleDTO updateModule(Long moduleId, ModuleDTO moduleDTO) {
+    public ModuleDTO updateModule(String moduleId, ModuleDTO moduleDTO) {
         Module module = moduleRepository.findById(moduleId)
                 .orElseThrow(() -> new IllegalArgumentException("Module not found"));
         module.setTitle(moduleDTO.getTitle());
@@ -293,7 +282,7 @@ public class AdminService {
     }
 
     @Transactional
-    public void deleteModule(Long moduleId) {
+    public void deleteModule(String moduleId) {
         logger.info("Deleting module with id: {}", moduleId);
         moduleRepository.deleteById(moduleId);
         logger.info("Deleted module with id: {}", moduleId);
@@ -398,18 +387,19 @@ public class AdminService {
 
             // Student info
             studentProgress.put("id", enrollment.getId());
-            studentProgress.put("name", enrollment.getUser().getName());
-            studentProgress.put("email", enrollment.getUser().getEmail());
+            userRepository.findById(enrollment.getUserId()).ifPresent(u -> {
+                studentProgress.put("name", u.getName());
+                studentProgress.put("email", u.getEmail());
+            });
 
             // Course info
-            studentProgress.put("courseTitle", enrollment.getCourse().getTitle());
-            studentProgress.put("mentorName",
-                    enrollment.getCourse().getMentor() != null ? enrollment.getCourse().getMentor().getUser().getName()
-                            : "N/A");
+            courseRepository.findById(enrollment.getCourseId()).ifPresent(c -> {
+                studentProgress.put("courseTitle", c.getTitle());
+                studentProgress.put("mentorName", c.getMentorId());
+            });
 
             // Progress calculation
-            Course course = enrollment.getCourse();
-            long totalModules = moduleRepository.countByCourseId(course.getId());
+            long totalModules = moduleRepository.countByCourseId(enrollment.getCourseId());
             long completedModules = enrollment.getCompletedModules() != null ? enrollment.getCompletedModules().size()
                     : 0;
 
@@ -454,8 +444,12 @@ public class AdminService {
     private MentorDTO toMentorDTO(Mentor mentor) {
         MentorDTO dto = new MentorDTO();
         dto.setId(mentor.getId());
-        dto.setName(mentor.getUser().getName());
-        dto.setEmail(mentor.getUser().getEmail());
+        if (mentor.getUserId() != null) {
+            userRepository.findById(mentor.getUserId()).ifPresent(u -> {
+                dto.setName(u.getName());
+                dto.setEmail(u.getEmail());
+            });
+        }
         dto.setExpertise(mentor.getExpertise());
         dto.setBio(mentor.getBio());
         dto.setImageUrl(mentor.getImageUrl());
@@ -469,12 +463,13 @@ public class AdminService {
         dto.setDescription(course.getDescription());
         dto.setPrice(course.getPrice());
         dto.setImageUrl(course.getImageUrl());
-        if (course.getMentor() != null) {
-            dto.setMentorId(course.getMentor().getId());
-            dto.setMentorName(course.getMentor().getUser().getName());
+        dto.setMentorId(course.getMentorId());
+        if (course.getMentorId() != null) {
+            mentorRepository.findById(course.getMentorId())
+                    .flatMap(m -> userRepository.findById(m.getUserId()))
+                    .ifPresent(u -> dto.setMentorName(u.getName()));
         } else {
-            dto.setMentorId(null);
-            dto.setMentorName("N/A");
+            dto.setMentorName(null);
         }
         return dto;
     }
@@ -486,6 +481,7 @@ public class AdminService {
         dto.setVideoUrl(module.getVideoUrl());
         dto.setSummary(module.getSummary());
         dto.setResourceUrl(module.getResourceUrl());
+        dto.setCourseId(module.getCourseId());
         return dto;
     }
 }

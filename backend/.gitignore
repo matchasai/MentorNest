@@ -1,0 +1,9 @@
+target/
+.env
+.env.*
+uploads/
+*.log
+*.iml
+.idea/
+.vscode/
+**/.DS_Store

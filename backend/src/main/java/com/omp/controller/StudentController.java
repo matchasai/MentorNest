@@ -30,46 +30,46 @@ public class StudentController {
     private final UserRepository userRepository;
 
     // Helper to get userId from Principal (email)
-    private Long getUserId(Principal principal) {
+    private String getUserId(Principal principal) {
         return userRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new IllegalArgumentException("User not found")).getId();
     }
 
     @PostMapping("/enroll/{courseId}")
-    public EnrollmentDTO enroll(@PathVariable Long courseId, Principal principal) {
-        Long userId = getUserId(principal);
+    public EnrollmentDTO enroll(@PathVariable String courseId, Principal principal) {
+        String userId = getUserId(principal);
         return studentService.enroll(userId, courseId);
     }
 
     @GetMapping("/my-courses")
     public List<CourseDTO> getMyCourses(Principal principal) {
-        Long userId = getUserId(principal);
+        String userId = getUserId(principal);
         return studentService.getMyCourses(userId);
     }
 
     @GetMapping("/courses/{courseId}/modules")
-    public List<ModuleDTO> getModules(@PathVariable Long courseId, Principal principal) {
-        Long userId = getUserId(principal);
+    public List<ModuleDTO> getModules(@PathVariable String courseId, Principal principal) {
+        String userId = getUserId(principal);
         return studentService.getModulesForEnrolledCourse(userId, courseId);
     }
 
     @GetMapping("/courses/{courseId}/modules-with-status")
-    public Map<String, Object> getModulesWithStatus(@PathVariable Long courseId, Principal principal) {
-        Long userId = getUserId(principal);
+    public Map<String, Object> getModulesWithStatus(@PathVariable String courseId, Principal principal) {
+        String userId = getUserId(principal);
         return studentService.getModulesWithCompletionStatus(userId, courseId);
     }
 
     @PostMapping("/courses/{courseId}/modules/{moduleId}/complete")
-    public EnrollmentDTO markModuleComplete(@PathVariable Long courseId, @PathVariable Long moduleId,
+    public EnrollmentDTO markModuleComplete(@PathVariable String courseId, @PathVariable String moduleId,
             Principal principal) {
-        Long userId = getUserId(principal);
+        String userId = getUserId(principal);
         return studentService.markModuleComplete(userId, courseId, moduleId);
     }
 
     @GetMapping("/courses/{courseId}/progress")
-    public ResponseEntity<Object> getProgress(@PathVariable Long courseId, Principal principal) {
+    public ResponseEntity<Object> getProgress(@PathVariable String courseId, Principal principal) {
         try {
-            Long userId = getUserId(principal);
+            String userId = getUserId(principal);
             double progress = studentService.getProgress(userId, courseId);
             return ResponseEntity.ok(progress); // Return as decimal (0-1), not percentage
         } catch (IllegalArgumentException e) {
@@ -84,9 +84,9 @@ public class StudentController {
     }
 
     @GetMapping("/courses/{courseId}/certificate")
-    public ResponseEntity<String> getCertificateUrl(@PathVariable Long courseId, Principal principal) {
+    public ResponseEntity<String> getCertificateUrl(@PathVariable String courseId, Principal principal) {
         try {
-            Long userId = getUserId(principal);
+            String userId = getUserId(principal);
             String certUrl = studentService.downloadCertificate(userId, courseId);
             return ResponseEntity.ok(certUrl);
         } catch (IllegalArgumentException e) {
@@ -109,9 +109,9 @@ public class StudentController {
     }
 
     @GetMapping("/courses/{courseId}/certificate/download")
-    public ResponseEntity<byte[]> downloadCertificateFile(@PathVariable Long courseId, Principal principal) {
+    public ResponseEntity<byte[]> downloadCertificateFile(@PathVariable String courseId, Principal principal) {
         try {
-            Long userId = getUserId(principal);
+            String userId = getUserId(principal);
             byte[] certificateBytes = studentService.getCertificateBytes(userId, courseId);
 
             return ResponseEntity.ok()

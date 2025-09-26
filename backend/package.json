@@ -1,0 +1,13 @@
+{
+  "name": "mentornest-backend",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Helper scripts to run the Spring Boot backend via npm",
+  "scripts": {
+    "dev": "mvn spring-boot:run",
+    "build": "mvn -q -DskipTests package",
+    "test": "mvn -q test",
+    "mongo:up": "docker compose -f ../docker-compose.dev.yml up -d",
+    "mongo:down": "docker compose -f ../docker-compose.dev.yml down"
+  }
+}

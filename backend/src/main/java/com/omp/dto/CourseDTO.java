@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 public class CourseDTO {
-    private Long id;
+    private String id;
     @NotBlank
     private String title;
     @NotBlank
@@ -15,7 +15,7 @@ public class CourseDTO {
     @NotNull
     @Positive
     private Double price;
-    private Long mentorId;
+    private String mentorId;
     private String mentorName;
     private String imageUrl;
     private String mentorImageUrl;

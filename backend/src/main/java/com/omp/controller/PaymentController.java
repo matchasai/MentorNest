@@ -9,14 +9,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.omp.config.RazorpayProperties;
 import com.omp.dto.PaymentDTO;
+import com.omp.dto.RazorpayOrderRequest;
+import com.omp.dto.RazorpayVerifyRequest;
 import com.omp.entity.User;
 import com.omp.service.PaymentService;
+import com.omp.service.RazorpayService;
 import com.omp.service.StudentService;
 import com.omp.service.UserService;
 
@@ -28,22 +33,67 @@ import lombok.RequiredArgsConstructor;
 public class PaymentController {
     private static final Logger logger = LoggerFactory.getLogger(PaymentController.class);
     private final PaymentService paymentService;
+    private final RazorpayService razorpayService;
+    private final RazorpayProperties razorpayProperties;
     private final StudentService studentService;
     private final UserService userService;
 
     @PostMapping("/initiate/{courseId}")
     public ResponseEntity<PaymentDTO> initiatePayment(
-            @PathVariable Long courseId,
+            @PathVariable String courseId,
             @RequestParam String paymentMethod,
             Principal principal) {
-        Long userId = getUserId(principal);
+        String userId = getUserId(principal);
         PaymentDTO payment = paymentService.initiatePayment(userId, courseId, paymentMethod);
         return ResponseEntity.ok(payment);
     }
 
+    // Razorpay: create order
+    @PostMapping("/razorpay/order")
+    public ResponseEntity<?> createRazorpayOrder(@RequestBody RazorpayOrderRequest req, Principal principal) {
+        try {
+            String userId = getUserId(principal);
+            // Use course price if amount not supplied
+            if (req.getAmountPaise() <= 0) {
+                PaymentDTO draft = paymentService.initiatePayment(userId, req.getCourseId(), "RAZORPAY");
+                long paise = Math.round(draft.getAmount() * 100);
+                req.setAmountPaise(paise);
+            }
+            String receipt = "rcpt_" + userId + "_" + req.getCourseId();
+            Map<String, Object> order = razorpayService.createOrder(req.getAmountPaise(),
+                    req.getCurrency() == null ? "INR" : req.getCurrency(),
+                    receipt,
+                    true);
+            order.put("keyId", razorpayProperties.getKeyId());
+            return ResponseEntity.ok(order);
+        } catch (Exception e) {
+            logger.error("Failed to create Razorpay order", e);
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // Razorpay: verify payment and mark as complete
+    @PostMapping("/razorpay/verify")
+    public ResponseEntity<?> verifyRazorpay(@RequestBody RazorpayVerifyRequest req, Principal principal) {
+        try {
+            String userId = getUserId(principal);
+            boolean ok = razorpayService.verifySignature(req.getRazorpayOrderId(), req.getRazorpayPaymentId(),
+                    req.getRazorpaySignature());
+            if (!ok) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid signature"));
+            }
+            PaymentDTO payment = paymentService.completePaymentByCourse(userId, req.getCourseId(),
+                    req.getPaymentMethod(), "COMPLETED");
+            return ResponseEntity.ok(payment);
+        } catch (Exception e) {
+            logger.error("Failed to verify Razorpay payment", e);
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PostMapping("/complete/{paymentId}")
     public ResponseEntity<PaymentDTO> completePayment(
-            @PathVariable Long paymentId,
+            @PathVariable String paymentId,
             @RequestParam("proof") MultipartFile proofFile) {
         try {
             String proofUrl = studentService.uploadPaymentProof(proofFile);
@@ -56,7 +106,7 @@ public class PaymentController {
 
     @GetMapping("/user/payments")
     public ResponseEntity<?> getUserPayments(Principal principal) {
-        Long userId = getUserId(principal);
+        String userId = getUserId(principal);
         return ResponseEntity.ok(paymentService.getUserPayments(userId));
     }
 
@@ -80,11 +130,11 @@ public class PaymentController {
 
     @GetMapping("/check/{courseId}")
     public ResponseEntity<?> checkPaymentStatus(
-            @PathVariable Long courseId,
+            @PathVariable String courseId,
             Principal principal) {
         try {
             logger.info("Checking payment status for courseId: {}, principal: {}", courseId, principal);
-            Long userId = getUserId(principal);
+            String userId = getUserId(principal);
             logger.info("User ID: {}", userId);
             boolean hasPaid = paymentService.hasUserPaidForCourse(userId, courseId);
             PaymentDTO payment = paymentService.getPaymentByUserAndCourse(userId, courseId);
@@ -97,7 +147,7 @@ public class PaymentController {
         }
     }
 
-    private Long getUserId(Principal principal) {
+    private String getUserId(Principal principal) {
         try {
             String userEmail = principal.getName();
             logger.info("Principal name: {}", userEmail);

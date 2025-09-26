@@ -1,3 +1,4 @@
+import { toAbsoluteUrl } from "../utils/url";
 // Enhanced Course details page for MentorNest with interactive modules
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -208,7 +209,7 @@ const CourseDetails = () => {
         fullUrl = resourceUrl;
       } else {
         // Prepend base URL if it's just a path
-        fullUrl = `http://localhost:8081${resourceUrl}`;
+        fullUrl = toAbsoluteUrl(resourceUrl);
       }
       
       console.log('Opening resource URL:', fullUrl);
@@ -237,7 +238,7 @@ const CourseDetails = () => {
         fullUrl = resourceUrl;
       } else {
         // Prepend base URL if it's just a path
-        fullUrl = `http://localhost:8081${resourceUrl}`;
+        fullUrl = toAbsoluteUrl(resourceUrl);
       }
       
       console.log('Downloading resource URL:', fullUrl);

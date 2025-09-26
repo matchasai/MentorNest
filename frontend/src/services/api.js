@@ -7,7 +7,9 @@ export function setSessionExpiredHandler(fn) {
 }
 
 const api = axios.create({
-  baseURL: "http://localhost:8081/api", // Changed to 8081
+  baseURL: (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL)
+    ? `${import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '')}/api`
+    : "http://localhost:8081/api",
   withCredentials: true, // Always send cookies
   headers: {
     'Content-Type': 'application/json',

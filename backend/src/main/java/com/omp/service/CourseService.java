@@ -27,17 +27,17 @@ public class CourseService {
         return courseRepository.findAll().stream().map(this::toCourseDTO).collect(Collectors.toList());
     }
 
-    public CourseDTO getCourseDetails(Long id) {
+    public CourseDTO getCourseDetails(String id) {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Course not found"));
         return toCourseDTO(course);
     }
 
-    public List<ModuleDTO> getModuleTitlesForCourse(Long courseId) {
+    public List<ModuleDTO> getModuleTitlesForCourse(String courseId) {
         logger.info("Getting modules for course ID: {}", courseId);
         try {
             List<Module> modules = moduleRepository.findAll().stream()
-                    .filter(m -> m.getCourse().getId().equals(courseId))
+                    .filter(m -> courseId.equals(m.getCourseId()))
                     .collect(Collectors.toList());
             logger.info("Found {} modules for course ID: {}", modules.size(), courseId);
 
@@ -64,15 +64,9 @@ public class CourseService {
         dto.setDescription(course.getDescription());
         dto.setPrice(course.getPrice());
         dto.setImageUrl(course.getImageUrl());
-        if (course.getMentor() != null) {
-            dto.setMentorId(course.getMentor().getId());
-            dto.setMentorName(course.getMentor().getUser().getName());
-            dto.setMentorImageUrl(course.getMentor().getImageUrl());
-        } else {
-            dto.setMentorId(null);
-            dto.setMentorName("N/A");
-            dto.setMentorImageUrl(null);
-        }
+        dto.setMentorId(course.getMentorId());
+        dto.setMentorName(null);
+        dto.setMentorImageUrl(null);
         return dto;
     }
 }

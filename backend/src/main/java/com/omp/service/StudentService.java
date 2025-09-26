@@ -37,7 +37,7 @@ public class StudentService {
 
         // Enroll in a course
         @Transactional
-        public EnrollmentDTO enroll(Long userId, Long courseId) {
+        public EnrollmentDTO enroll(String userId, String courseId) {
                 User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
                 Course course = courseRepository.findById(courseId)
@@ -54,8 +54,8 @@ public class StudentService {
                 }
 
                 Enrollment enrollment = Enrollment.builder()
-                                .user(user)
-                                .course(course)
+                                .userId(user.getId())
+                                .courseId(course.getId())
                                 .completedModules(new HashSet<>())
                                 .certificateUrl(null)
                                 .build();
@@ -64,15 +64,20 @@ public class StudentService {
         }
 
         // View enrolled courses
-        public List<CourseDTO> getMyCourses(Long userId) {
+        public List<CourseDTO> getMyCourses(String userId) {
                 List<Enrollment> enrollments = enrollmentRepository.findAll().stream()
-                                .filter(e -> e.getUser().getId().equals(userId))
+                                .filter(e -> e.getUserId().equals(userId))
                                 .collect(Collectors.toList());
-                return enrollments.stream().map(e -> toCourseDTO(e.getCourse())).collect(Collectors.toList());
+                return enrollments.stream()
+                                .map(e -> courseRepository.findById(e.getCourseId())
+                                                .map(this::toCourseDTO)
+                                                .orElse(null))
+                                .filter(c -> c != null)
+                                .collect(Collectors.toList());
         }
 
         // View modules for an enrolled course
-        public List<ModuleDTO> getModulesForEnrolledCourse(Long userId, Long courseId) {
+        public List<ModuleDTO> getModulesForEnrolledCourse(String userId, String courseId) {
                 // Verify enrollment exists
                 enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
                                 .orElseThrow(() -> new IllegalArgumentException("Not enrolled in this course"));
@@ -83,7 +88,7 @@ public class StudentService {
         }
 
         // Get modules with completion status for enrolled course
-        public Map<String, Object> getModulesWithCompletionStatus(Long userId, Long courseId) {
+        public Map<String, Object> getModulesWithCompletionStatus(String userId, String courseId) {
                 Enrollment enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
                                 .orElseThrow(() -> new IllegalArgumentException("Not enrolled in this course"));
 
@@ -100,12 +105,12 @@ public class StudentService {
 
         // Mark module as complete
         @Transactional
-        public EnrollmentDTO markModuleComplete(Long userId, Long courseId, Long moduleId) {
+        public EnrollmentDTO markModuleComplete(String userId, String courseId, String moduleId) {
                 Enrollment enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
                                 .orElseThrow(() -> new IllegalArgumentException("Not enrolled in this course"));
                 Module module = moduleRepository.findById(moduleId)
                                 .orElseThrow(() -> new IllegalArgumentException("Module not found"));
-                if (!module.getCourse().getId().equals(courseId)) {
+                if (!module.getCourseId().equals(courseId)) {
                         throw new IllegalArgumentException("Module does not belong to this course");
                 }
                 enrollment.getCompletedModules().add(moduleId);
@@ -114,7 +119,7 @@ public class StudentService {
         }
 
         // Get progress for a course
-        public double getProgress(Long userId, Long courseId) {
+        public double getProgress(String userId, String courseId) {
                 Enrollment enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
                                 .orElseThrow(() -> new IllegalArgumentException("Not enrolled in this course"));
 
@@ -128,7 +133,7 @@ public class StudentService {
 
         // Download certificate (generate actual certificate)
         @Transactional
-        public String downloadCertificate(Long userId, Long courseId) {
+        public String downloadCertificate(String userId, String courseId) {
                 System.out.println("Download certificate requested for user: " + userId + ", course: " + courseId);
 
                 Enrollment enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
@@ -169,7 +174,7 @@ public class StudentService {
         }
 
         // Get certificate as bytes for direct download
-        public byte[] getCertificateBytes(Long userId, Long courseId) {
+        public byte[] getCertificateBytes(String userId, String courseId) {
                 System.out.println("Getting certificate bytes for user: " + userId + ", course: " + courseId);
 
                 Enrollment enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
@@ -200,8 +205,8 @@ public class StudentService {
         private EnrollmentDTO toEnrollmentDTO(Enrollment e) {
                 EnrollmentDTO dto = new EnrollmentDTO();
                 dto.setId(e.getId());
-                dto.setUserId(e.getUser().getId());
-                dto.setCourseId(e.getCourse().getId());
+                dto.setUserId(e.getUserId());
+                dto.setCourseId(e.getCourseId());
                 dto.setCompletedModules(e.getCompletedModules());
                 dto.setCertificateUrl(e.getCertificateUrl());
                 return dto;
@@ -214,15 +219,9 @@ public class StudentService {
                 dto.setDescription(course.getDescription());
                 dto.setPrice(course.getPrice());
                 dto.setImageUrl(course.getImageUrl());
-                if (course.getMentor() != null) {
-                        dto.setMentorId(course.getMentor().getId());
-                        dto.setMentorName(course.getMentor().getUser().getName());
-                        dto.setMentorImageUrl(course.getMentor().getImageUrl());
-                } else {
-                        dto.setMentorId(null);
-                        dto.setMentorName("N/A");
-                        dto.setMentorImageUrl(null);
-                }
+                dto.setMentorId(course.getMentorId());
+                dto.setMentorName(null);
+                dto.setMentorImageUrl(null);
                 return dto;
         }
 
@@ -232,7 +231,7 @@ public class StudentService {
                 dto.setTitle(m.getTitle());
                 dto.setVideoUrl(m.getVideoUrl());
                 dto.setSummary(m.getSummary());
-                dto.setCourseId(m.getCourse().getId());
+                dto.setCourseId(m.getCourseId());
                 return dto;
         }
 }

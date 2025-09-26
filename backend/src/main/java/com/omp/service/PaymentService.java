@@ -25,9 +25,9 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
     private final CourseRepository courseRepository;
-    private final FileStorageService fileStorageService;
+    // private final FileStorageService fileStorageService; // not used
 
-    public PaymentDTO initiatePayment(Long userId, Long courseId, String paymentMethod) {
+    public PaymentDTO initiatePayment(String userId, String courseId, String paymentMethod) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         Course course = courseRepository.findById(courseId)
@@ -39,8 +39,8 @@ public class PaymentService {
         }
 
         Payment payment = Payment.builder()
-                .user(user)
-                .course(course)
+                .userId(user.getId())
+                .courseId(course.getId())
                 .amount(course.getPrice())
                 .status(PaymentStatus.PENDING)
                 .paymentMethod(paymentMethod)
@@ -53,7 +53,7 @@ public class PaymentService {
     }
 
     @Transactional
-    public PaymentDTO completePayment(Long paymentId, String paymentProofUrl) {
+    public PaymentDTO completePayment(String paymentId, String paymentProofUrl) {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new IllegalArgumentException("Payment not found"));
 
@@ -66,7 +66,7 @@ public class PaymentService {
     }
 
     @Transactional
-    public PaymentDTO completePaymentByCourse(Long userId, Long courseId, String paymentMethod, String status) {
+    public PaymentDTO completePaymentByCourse(String userId, String courseId, String paymentMethod, String status) {
         // Find existing payment or create new one
         Payment payment = paymentRepository.findByUserIdAndCourseId(userId, courseId)
                 .orElseGet(() -> {
@@ -76,8 +76,8 @@ public class PaymentService {
                             .orElseThrow(() -> new IllegalArgumentException("Course not found"));
 
                     return Payment.builder()
-                            .user(user)
-                            .course(course)
+                            .userId(user.getId())
+                            .courseId(course.getId())
                             .amount(course.getPrice())
                             .status(PaymentStatus.PENDING)
                             .paymentMethod(paymentMethod)
@@ -100,18 +100,18 @@ public class PaymentService {
         return toPaymentDTO(savedPayment);
     }
 
-    public List<PaymentDTO> getUserPayments(Long userId) {
+    public List<PaymentDTO> getUserPayments(String userId) {
         return paymentRepository.findByUserIdAndStatus(userId, PaymentStatus.COMPLETED)
                 .stream()
                 .map(this::toPaymentDTO)
                 .collect(Collectors.toList());
     }
 
-    public boolean hasUserPaidForCourse(Long userId, Long courseId) {
+    public boolean hasUserPaidForCourse(String userId, String courseId) {
         return paymentRepository.existsByUserIdAndCourseIdAndStatus(userId, courseId, PaymentStatus.COMPLETED);
     }
 
-    public PaymentDTO getPaymentByUserAndCourse(Long userId, Long courseId) {
+    public PaymentDTO getPaymentByUserAndCourse(String userId, String courseId) {
         return paymentRepository.findByUserIdAndCourseIdAndStatus(userId, courseId, PaymentStatus.COMPLETED)
                 .map(this::toPaymentDTO)
                 .orElse(null);
@@ -120,9 +120,9 @@ public class PaymentService {
     private PaymentDTO toPaymentDTO(Payment payment) {
         PaymentDTO dto = new PaymentDTO();
         dto.setId(payment.getId());
-        dto.setUserId(payment.getUser().getId());
-        dto.setCourseId(payment.getCourse().getId());
-        dto.setCourseTitle(payment.getCourse().getTitle());
+        dto.setUserId(payment.getUserId());
+        dto.setCourseId(payment.getCourseId());
+        // courseTitle might need a fetch if required elsewhere
         dto.setAmount(payment.getAmount());
         dto.setStatus(payment.getStatus());
         dto.setPaymentMethod(payment.getPaymentMethod());

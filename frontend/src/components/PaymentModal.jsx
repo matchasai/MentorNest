@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { FaCheckCircle, FaCreditCard, FaQrcode, FaTimes } from 'react-icons/fa';
 import api from '../services/api';
@@ -10,11 +10,51 @@ const PaymentModal = ({ course, onClose, onPaymentComplete }) => {
 
   const handleInitiatePayment = async () => {
     try {
-      const response = await api.post(`/payment/initiate/${course.id}`, null, {
-        params: { paymentMethod }
-      });
-      setStep('payment');
-      toast.success('Payment initiated! Please complete your payment.');
+      if (paymentMethod === 'credit_card') {
+        // Use Razorpay checkout
+        const { data: order } = await api.post(`/payment/razorpay/order`, {
+          courseId: course.id,
+          amountPaise: Math.round(Number(course.price) * 100),
+          currency: 'INR'
+        });
+
+        const options = {
+          key: order.keyId,
+          amount: order.amount,
+          currency: order.currency,
+          name: 'MentorNest',
+          description: course.title,
+          order_id: order.id,
+          handler: async function (response) {
+            try {
+              await api.post(`/payment/razorpay/verify`, {
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+                courseId: course.id,
+                paymentMethod: 'RAZORPAY'
+              });
+              setStep('complete');
+              toast.success('Payment completed successfully!');
+              setTimeout(() => {
+                onPaymentComplete();
+                onClose();
+              }, 1200);
+            } catch (e) {
+              toast.error('Failed to verify payment');
+            }
+          },
+          theme: { color: '#2563eb' },
+          prefill: {},
+          modal: { ondismiss: () => {} }
+        };
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      } else {
+        // QR code flow remains manual confirmation
+        setStep('payment');
+        toast.success('Payment initiated! Please complete your payment.');
+      }
     } catch (error) {
       toast.error('Failed to initiate payment');
     }
@@ -22,12 +62,7 @@ const PaymentModal = ({ course, onClose, onPaymentComplete }) => {
 
   const handleCompletePayment = async () => {
     try {
-      // Simulate payment completion
-      await api.post(`/payment/complete/${course.id}`, {
-        paymentMethod,
-        status: 'COMPLETED'
-      });
-
+      // Manual confirmation path for QR code only
       setStep('complete');
       toast.success('Payment completed successfully!');
       setTimeout(() => {
