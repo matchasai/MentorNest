@@ -14,14 +14,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/debug")
 public class DebugController {
-	@GetMapping
-	public ResponseEntity<Map<String, Object>> debug(Principal principal) {
-		Map<String, Object> out = new HashMap<>();
-		out.put("principal", principal != null ? principal.getName() : null);
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		out.put("authenticated", auth != null && auth.isAuthenticated());
-		out.put("authorities", auth != null ? auth.getAuthorities() : null);
-		return ResponseEntity.ok(out);
-	}
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> debug(Principal principal) {
+        Map<String, Object> out = new HashMap<>();
+        out.put("principal", principal != null ? principal.getName() : null);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        out.put("authenticated", auth != null && auth.isAuthenticated());
+        out.put("authorities", auth != null ? auth.getAuthorities() : null);
+        return ResponseEntity.ok(out);
+    }
 }
-
