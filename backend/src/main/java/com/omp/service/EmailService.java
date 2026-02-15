@@ -19,6 +19,9 @@ public class EmailService {
     
     @Value("${spring.mail.username}")
     private String fromEmail;
+
+    @Value("${app.frontend-url:${BASE_URL:http://localhost:5173}}")
+    private String frontendBaseUrl;
     
     public void sendPasswordResetEmail(String toEmail, String resetToken, String userName) {
         try {
@@ -27,7 +30,7 @@ public class EmailService {
             message.setTo(toEmail);
             message.setSubject("Password Reset Request - MentorNest");
             
-            String resetUrl = "http://localhost:5173/reset-password?token=" + resetToken;
+            String resetUrl = buildResetUrl(resetToken);
             
             String emailBody = String.format(
                 "Dear %s,\n\n" +
@@ -74,5 +77,13 @@ public class EmailService {
             logger.error("Failed to send confirmation email to: {}", toEmail, e);
             // Don't throw exception here as password was already reset
         }
+    }
+
+    private String buildResetUrl(String resetToken) {
+        String base = frontendBaseUrl == null ? "" : frontendBaseUrl.trim();
+        if (base.endsWith("/")) {
+            base = base.substring(0, base.length() - 1);
+        }
+        return base + "/reset-password?token=" + resetToken;
     }
 }

@@ -61,6 +61,7 @@ Key properties (all env-driven):
 - `SERVER_PORT` (default 8081)
 - `FILE_UPLOAD_DIR` (default `uploads/`)
 - `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` (required for live checkout)
+- `APP_FRONTEND_URL` (base URL for password reset links; falls back to `BASE_URL`)
 
 Profiles:
 - Dev defaults are in `src/main/resources/application.properties`
