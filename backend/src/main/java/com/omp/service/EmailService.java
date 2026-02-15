@@ -48,8 +48,9 @@ public class EmailService {
             mailSender.send(message);
             logger.info("Password reset email sent successfully to: {}", toEmail);
         } catch (Exception e) {
-            logger.error("Failed to send password reset email to: {}", toEmail, e);
-            throw new RuntimeException("Failed to send email: " + e.getMessage());
+            // Log error but don't throw - email is optional, password reset should still work
+            logger.warn("Failed to send password reset email to: {} - Error: {}", toEmail, e.getMessage());
+            logger.debug("Email sending failed - this may be due to email not being configured in production", e);
         }
     }
     
