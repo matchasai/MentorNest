@@ -1,21 +1,19 @@
 // Creative Educational Platform Homepage - MentorNest
 import { motion } from "framer-motion";
-import React, { useEffect, useState } from "react";
-import { 
-  FaBookOpen, 
-  FaChalkboardTeacher, 
-  FaCheckCircle, 
-  FaGraduationCap, 
-  FaHeart,
-  FaLightbulb, 
-  FaRocket, 
-  FaStar, 
-  FaUsers,
-  FaAward,
-  FaTrophy,
-  FaRegSmile,
-  FaPlay,
-  FaArrowRight
+import { useEffect, useState } from "react";
+import {
+    FaArrowRight,
+    FaAward,
+    FaBookOpen,
+    FaChalkboardTeacher,
+    FaGraduationCap,
+    FaHeart,
+    FaLightbulb,
+    FaPlay,
+    FaRocket,
+    FaStar,
+    FaTrophy,
+    FaUsers
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
 

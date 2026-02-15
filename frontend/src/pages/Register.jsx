@@ -1,9 +1,9 @@
 // Register page for MentorNest with modern form
-import React, { useState } from "react";
-import toast from "react-hot-toast";
-import { FaEnvelope, FaLock, FaUser, FaEye, FaEyeSlash, FaGraduationCap } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { FaEnvelope, FaEye, FaEyeSlash, FaGraduationCap, FaLock, FaUser } from "react-icons/fa";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { register as registerApi } from "../services/authService";
 

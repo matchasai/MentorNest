@@ -13,8 +13,6 @@ services:
         value: "18000000"
       - key: JWT_REFRESH_EXPIRATION
         value: "604800000"
-      - key: SERVER_PORT
-        value: "8081"
       - key: BASE_URL
         value: https://mentornest.onrender.com
       - key: SPRING_PROFILES_ACTIVE

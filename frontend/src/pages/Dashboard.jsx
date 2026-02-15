@@ -1,22 +1,20 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import { 
-  FaBookOpen, 
-  FaGraduationCap, 
-  FaAward, 
-  FaClock, 
-  FaFire, 
-  FaStar,
-  FaRocket,
-  FaChartLine,
-  FaPlay,
-  FaTrophy,
-  FaUsers,
-  FaArrowRight
-} from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import {
+    FaArrowRight,
+    FaAward,
+    FaBookOpen,
+    FaChartLine,
+    FaGraduationCap,
+    FaPlay,
+    FaRocket,
+    FaStar,
+    FaTrophy,
+    FaUsers
+} from 'react-icons/fa';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
 const Dashboard = () => {

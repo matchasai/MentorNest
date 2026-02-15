@@ -1,23 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { 
-  FaUsers, 
-  FaChalkboardTeacher, 
-  FaCalendarAlt, 
-  FaChartLine, 
-  FaStar, 
-  FaBookOpen, 
-  FaClock,
-  FaRocket,
-  FaTrophy,
-  FaLightbulb,
-  FaHeart,
-  FaComment,
-  FaEye
+import {
+    FaBookOpen,
+    FaCalendarAlt,
+    FaChalkboardTeacher,
+    FaChartLine,
+    FaClock,
+    FaComment,
+    FaEye,
+    FaHeart,
+    FaLightbulb,
+    FaRocket,
+    FaStar,
+    FaTrophy,
+    FaUsers
 } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { motion } from 'framer-motion';
 
 const MentorDashboard = () => {
   const { user } = useAuth();

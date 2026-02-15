@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FaBook, FaCheckCircle, FaClock, FaDownload, FaUserGraduate } from 'react-icons/fa';
 import api from '../services/api';
 

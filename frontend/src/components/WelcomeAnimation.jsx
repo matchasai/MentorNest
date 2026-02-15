@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FaChalkboardTeacher, FaGraduationCap, FaUserGraduate } from 'react-icons/fa';
 
 const WelcomeAnimation = ({ userName = "Sai Sujan" }) => {
