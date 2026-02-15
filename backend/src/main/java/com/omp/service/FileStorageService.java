@@ -9,6 +9,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,6 +18,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @Service
 public class FileStorageService {
+
+    private static final Logger logger = LoggerFactory.getLogger(FileStorageService.class);
 
     private final Path rootLocation;
 
@@ -34,7 +38,7 @@ public class FileStorageService {
             Files.createDirectories(rootLocation.resolve("payments"));
             Files.createDirectories(rootLocation.resolve("courses"));
 
-            System.out.println("File storage initialized successfully at: " + rootLocation.toAbsolutePath());
+            logger.info("File storage initialized at: {}", rootLocation.toAbsolutePath());
         } catch (IOException e) {
             throw new RuntimeException("Could not initialize storage", e);
         }
@@ -72,7 +76,7 @@ public class FileStorageService {
 
     public String storeCertificate(byte[] imageBytes, String fileName) {
         try {
-            System.out.println("Storing certificate: " + fileName);
+            logger.debug("Storing certificate: {}", fileName);
             Path dirPath = rootLocation.resolve("certificates");
             Files.createDirectories(dirPath);
             Path filePath = dirPath.resolve(fileName);
@@ -86,11 +90,10 @@ public class FileStorageService {
                     .path(fileName)
                     .toUriString();
 
-            System.out.println("Certificate stored successfully at: " + fileUrl);
+            logger.info("Certificate stored at: {}", fileUrl);
             return fileUrl;
         } catch (IOException e) {
-            System.err.println("Failed to store certificate: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Failed to store certificate: {}", fileName, e);
             throw new RuntimeException("Failed to store certificate", e);
         }
     }

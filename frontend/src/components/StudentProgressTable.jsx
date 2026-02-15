@@ -118,7 +118,7 @@ const StudentProgressTable = () => {
                 </td>
               </tr>
             ) : (
-              filteredStudents.map((student, index) => (
+              filteredStudents.map((student) => (
                 <tr key={student.id} className="border-b border-gray-700 hover:bg-gray-700/50">
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-3">

@@ -41,14 +41,18 @@ api.interceptors.response.use(
       return Promise.reject(err);
     } else if (err.response && err.response.status === 403) {
       // Forbidden - user doesn't have permission
-      console.log('Access forbidden:', err.response.data?.message || 'Permission denied');
+      // Don't log or show errors for auth/me checks (expected when not logged in)
+      if (err.config?.url?.includes('/auth/me')) {
+        return Promise.reject(err);
+      }
+
       // Don't show toast for 403 errors in dashboard/protected routes
       const isApiCall = err.config?.url?.includes('/api/');
       if (isApiCall && !err.config?.url?.includes('/auth/')) {
-        console.log('API access denied, user may need to login or lacks permissions');
-      } else {
-        toast.error(err.response.data?.message || "Access denied");
+        return Promise.reject(err);
       }
+
+      toast.error(err.response.data?.message || "Access denied");
       return Promise.reject(err);
     } else if (err.response) {
       if (err.response.data?.message) {

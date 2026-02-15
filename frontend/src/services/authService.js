@@ -12,8 +12,3 @@ export async function register({ name, email, password, role }) {
   return res.data;
 }
 
-// Refresh token
-export async function refreshToken(refreshToken) {
-  const res = await api.post("/auth/refresh", null, { params: { refreshToken } });
-  return res.data;
-} 

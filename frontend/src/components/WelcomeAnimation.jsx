@@ -3,23 +3,20 @@ import { FaChalkboardTeacher, FaGraduationCap, FaUserGraduate } from 'react-icon
 
 const WelcomeAnimation = ({ userName = "Sai Sujan" }) => {
   const [welcomeText, setWelcomeText] = useState("");
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [showCursor, setShowCursor] = useState(true);
 
   const fullText = `Welcome back, ${userName}! 👋`;
 
   useEffect(() => {
     // Animated welcome text
+    let index = 0;
     const timer = setInterval(() => {
-      setCurrentIndex(prev => {
-        if (prev < fullText.length) {
-          setWelcomeText(fullText.substring(0, prev + 1));
-          return prev + 1;
-        } else {
-          clearInterval(timer);
-          return prev;
-        }
-      });
+      if (index < fullText.length) {
+        setWelcomeText(fullText.substring(0, index + 1));
+        index += 1;
+      } else {
+        clearInterval(timer);
+      }
     }, 100);
 
     // Blinking cursor effect

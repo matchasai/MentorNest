@@ -17,6 +17,7 @@ import AdminCourses from "./pages/admin/AdminCourses";
 import AdminMentors from "./pages/admin/AdminMentors";
 import AdminModules from "./pages/admin/AdminModules";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminStudentProgress from "./pages/admin/AdminStudentProgress";
 import Certificates from "./pages/Certificates";
 import Contact from "./pages/Contact";
 import CourseDetails from "./pages/CourseDetails";
@@ -26,9 +27,12 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import MentorDashboard from "./pages/MentorDashboard";
 import Mentors from "./pages/Mentors";
+import NotFound from "./pages/NotFound";
 import Payment from "./pages/Payment";
 import Profile from "./pages/Profile";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import { setSessionExpiredHandler } from "./services/api";
 
 const AppLayout = () => {
@@ -43,6 +47,8 @@ const AppLayout = () => {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/course/:id" element={<CourseDetails />} />
           <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
@@ -59,8 +65,10 @@ const AppLayout = () => {
             <Route path="mentors" element={<AdminMentors />} />
             <Route path="courses" element={<AdminCourses />} />
             <Route path="modules" element={<AdminModules />} />
+            <Route path="student-progress" element={<AdminStudentProgress />} />
             <Route path="analytics" element={<AdminAnalytics />} />
           </Route>
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
       {!isAdminPage && <Footer />}

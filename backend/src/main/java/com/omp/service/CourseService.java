@@ -12,7 +12,9 @@ import com.omp.dto.ModuleDTO;
 import com.omp.entity.Course;
 import com.omp.entity.Module;
 import com.omp.repository.CourseRepository;
+import com.omp.repository.MentorRepository;
 import com.omp.repository.ModuleRepository;
+import com.omp.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +24,8 @@ public class CourseService {
     private static final Logger logger = LoggerFactory.getLogger(CourseService.class);
     private final CourseRepository courseRepository;
     private final ModuleRepository moduleRepository;
+    private final MentorRepository mentorRepository;
+    private final UserRepository userRepository;
 
     public List<CourseDTO> getAllCourses() {
         return courseRepository.findAll().stream().map(this::toCourseDTO).collect(Collectors.toList());
@@ -65,8 +69,21 @@ public class CourseService {
         dto.setPrice(course.getPrice());
         dto.setImageUrl(course.getImageUrl());
         dto.setMentorId(course.getMentorId());
-        dto.setMentorName(null);
-        dto.setMentorImageUrl(null);
+
+        // Fetch mentor information
+        if (course.getMentorId() != null) {
+            mentorRepository.findById(course.getMentorId()).ifPresent(mentor -> {
+                // Set mentor image from Mentor entity
+                dto.setMentorImageUrl(mentor.getImageUrl());
+
+                // Fetch mentor name from User entity
+                if (mentor.getUserId() != null) {
+                    userRepository.findById(mentor.getUserId())
+                            .ifPresent(user -> dto.setMentorName(user.getName()));
+                }
+            });
+        }
+
         return dto;
     }
 }

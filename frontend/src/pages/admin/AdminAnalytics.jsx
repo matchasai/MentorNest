@@ -21,31 +21,7 @@ import api from "../../services/api";
 const AdminAnalytics = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [welcomeText, setWelcomeText] = useState("");
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [userName, setUserName] = useState("Sai");
-
-  const fullText = `Welcome back, ${userName}! `;
-
-  useEffect(() => {
-    // Set welcome message to Sai
-    setUserName("Sai");
-
-    // Animated welcome text
-    const timer = setInterval(() => {
-      setCurrentIndex(prev => {
-        if (prev < fullText.length) {
-          setWelcomeText(fullText.substring(0, prev + 1));
-          return prev + 1;
-        } else {
-          clearInterval(timer);
-          return prev;
-        }
-      });
-    }, 100);
-
-    return () => clearInterval(timer);
-  }, [fullText]);
+  const userName = "Sai";
 
   useEffect(() => {
     api.get("/admin/analytics")

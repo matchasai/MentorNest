@@ -18,7 +18,6 @@ import {
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import api from '../services/api';
 
 const MentorDashboard = () => {
   const { user } = useAuth();
@@ -209,9 +208,9 @@ const MentorDashboard = () => {
             variants={fadeIn}
             className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8"
           >
-            {statsData.map((stat, index) => (
+            {statsData.map((stat) => (
               <motion.div
-                key={index}
+                key={stat.label}
                 className={`${stat.bgColor} ${stat.borderColor} border-2 rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -256,7 +255,7 @@ const MentorDashboard = () => {
 
                 {upcomingSessions.length > 0 ? (
                   <div className="space-y-4">
-                    {upcomingSessions.map((session, index) => (
+                    {upcomingSessions.map((session) => (
                       <motion.div 
                         key={session.id}
                         className="p-4 bg-gradient-to-r from-teal-50 to-blue-50 rounded-xl border border-teal-200 hover:shadow-lg transition-all duration-300 group"
@@ -316,7 +315,7 @@ const MentorDashboard = () => {
                 </h2>
                 
                 <div className="space-y-4">
-                  {recentStudents.map((student, index) => (
+                  {recentStudents.map((student) => (
                     <motion.div 
                       key={student.id}
                       className="bg-white p-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-blue-200"
@@ -364,9 +363,9 @@ const MentorDashboard = () => {
                     { text: "Schedule Session", desc: "Plan upcoming classes", color: "green", icon: FaCalendarAlt },
                     { text: "View Analytics", desc: "Track your performance", color: "purple", icon: FaChartLine },
                     { text: "Student Messages", desc: "Connect with learners", color: "orange", icon: FaComment }
-                  ].map((action, index) => (
+                  ].map((action) => (
                     <button
-                      key={index}
+                      key={action.text}
                       className={`w-full flex items-center gap-4 p-4 bg-${action.color}-50 rounded-xl hover:bg-${action.color}-100 transition-all duration-300 transform hover:translate-x-2 group border border-${action.color}-200`}
                     >
                       <div className={`w-10 h-10 bg-${action.color}-500 text-white rounded-full flex items-center justify-center group-hover:scale-110 transition-transform`}>

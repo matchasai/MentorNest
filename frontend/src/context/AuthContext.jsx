@@ -10,10 +10,18 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
+      // Check if token exists before making API call
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
       try {
         const profile = await getMe();
         setUser(profile);
-      } catch (error) {
+      } catch {
         // If it's a 401 or 403, user is not authenticated, which is normal
         setUser(null);
         // Clear invalid token
@@ -62,4 +70,5 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext); 
+// eslint-disable-next-line react-refresh/only-export-components
+export const useAuth = () => useContext(AuthContext);

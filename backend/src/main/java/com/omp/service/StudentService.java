@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class StudentService {
+        private static final Logger logger = LoggerFactory.getLogger(StudentService.class);
         private final UserRepository userRepository;
         private final CourseRepository courseRepository;
         private final EnrollmentRepository enrollmentRepository;
@@ -43,9 +46,11 @@ public class StudentService {
                 Course course = courseRepository.findById(courseId)
                                 .orElseThrow(() -> new IllegalArgumentException("Course not found"));
 
-                // Check if already enrolled
-                if (enrollmentRepository.findByUserIdAndCourseId(userId, courseId).isPresent()) {
-                        throw new IllegalArgumentException("Already enrolled");
+                // Check if already enrolled - return existing enrollment
+                var existingEnrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId);
+                if (existingEnrollment.isPresent()) {
+                        // Student is already enrolled - return the existing enrollment
+                        return toEnrollmentDTO(existingEnrollment.get());
                 }
 
                 // Check if user has paid for the course
@@ -134,7 +139,7 @@ public class StudentService {
         // Download certificate (generate actual certificate)
         @Transactional
         public String downloadCertificate(String userId, String courseId) {
-                System.out.println("Download certificate requested for user: " + userId + ", course: " + courseId);
+                logger.debug("Download certificate requested for user: {}, course: {}", userId, courseId);
 
                 Enrollment enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
                                 .orElseThrow(() -> new IllegalArgumentException("Not enrolled in this course"));
@@ -142,9 +147,8 @@ public class StudentService {
                 // Use the repository method that gets modules for specific course
                 long totalModules = moduleRepository.countByCourseId(courseId);
 
-                System.out.println(
-                                "Total modules: " + totalModules + ", completed modules: "
-                                                + enrollment.getCompletedModules().size());
+                logger.debug("Total modules: {}, completed modules: {}", totalModules,
+                                enrollment.getCompletedModules().size());
 
                 if (enrollment.getCompletedModules().size() < totalModules) {
                         throw new IllegalArgumentException("Course not completed");
@@ -152,7 +156,7 @@ public class StudentService {
 
                 // Generate certificate if not already generated
                 if (enrollment.getCertificateUrl() == null) {
-                        System.out.println("Generating new certificate...");
+                        logger.debug("Generating new certificate");
                         User user = userRepository.findById(userId)
                                         .orElseThrow(() -> new IllegalArgumentException("User not found"));
                         Course course = courseRepository.findById(courseId)
@@ -164,7 +168,7 @@ public class StudentService {
                         return certUrl;
                 }
 
-                System.out.println("Returning existing certificate: " + enrollment.getCertificateUrl());
+                logger.debug("Returning existing certificate: {}", enrollment.getCertificateUrl());
                 return enrollment.getCertificateUrl();
         }
 
@@ -175,7 +179,7 @@ public class StudentService {
 
         // Get certificate as bytes for direct download
         public byte[] getCertificateBytes(String userId, String courseId) {
-                System.out.println("Getting certificate bytes for user: " + userId + ", course: " + courseId);
+                logger.debug("Getting certificate bytes for user: {}, course: {}", userId, courseId);
 
                 Enrollment enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
                                 .orElseThrow(() -> new IllegalArgumentException("Not enrolled in this course"));
@@ -183,9 +187,8 @@ public class StudentService {
                 // Use the repository method that gets modules for specific course
                 long totalModules = moduleRepository.countByCourseId(courseId);
 
-                System.out.println(
-                                "Total modules: " + totalModules + ", completed modules: "
-                                                + enrollment.getCompletedModules().size());
+                logger.debug("Total modules: {}, completed modules: {}", totalModules,
+                                enrollment.getCompletedModules().size());
 
                 if (enrollment.getCompletedModules().size() < totalModules) {
                         throw new IllegalArgumentException("Course not completed");
@@ -196,7 +199,7 @@ public class StudentService {
                 Course course = courseRepository.findById(courseId)
                                 .orElseThrow(() -> new IllegalArgumentException("Course not found"));
 
-                System.out.println("Generating certificate bytes...");
+                logger.debug("Generating certificate bytes");
                 // Generate certificate bytes
                 return certificateService.generateCertificateBytes(user, course, enrollment);
         }

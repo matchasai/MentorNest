@@ -464,13 +464,21 @@ public class AdminService {
         dto.setPrice(course.getPrice());
         dto.setImageUrl(course.getImageUrl());
         dto.setMentorId(course.getMentorId());
+
+        // Fetch mentor information
         if (course.getMentorId() != null) {
-            mentorRepository.findById(course.getMentorId())
-                    .flatMap(m -> userRepository.findById(m.getUserId()))
-                    .ifPresent(u -> dto.setMentorName(u.getName()));
-        } else {
-            dto.setMentorName(null);
+            mentorRepository.findById(course.getMentorId()).ifPresent(mentor -> {
+                // Set mentor image from Mentor entity
+                dto.setMentorImageUrl(mentor.getImageUrl());
+
+                // Fetch mentor name from User entity
+                if (mentor.getUserId() != null) {
+                    userRepository.findById(mentor.getUserId())
+                            .ifPresent(user -> dto.setMentorName(user.getName()));
+                }
+            });
         }
+
         return dto;
     }
 

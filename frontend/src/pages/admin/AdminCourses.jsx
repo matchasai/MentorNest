@@ -3,7 +3,6 @@ import { toAbsoluteUrl } from "../../utils/url";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { FaBook, FaChalkboardTeacher, FaDollarSign } from "react-icons/fa";
-import { useAuth } from "../../context/AuthContext";
 import { createCourse, deleteCourse, getAdminCourses, getMentors, updateCourse } from "../../services/adminService";
 import api from "../../services/api";
 
@@ -20,7 +19,6 @@ const validateCourseForm = (form) => {
 
 
 const AdminCourses = () => {
-  const { user } = useAuth();
   const [courses, setCourses] = useState([]);
   const [mentors, setMentors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,10 +60,9 @@ const AdminCourses = () => {
         imageUrl: form.imageUrl,
         mentorId: form.mentorId ? Number(form.mentorId) : null
       };
-      let savedCourse;
       if (editingId) {
         try {
-          savedCourse = await updateCourse(editingId, courseData);
+          await updateCourse(editingId, courseData);
           toast.success("Course updated");
         } catch (err) {
           if (err.response && (err.response.status === 403 || err.response.status === 404)) {
@@ -78,7 +75,7 @@ const AdminCourses = () => {
           throw err;
         }
       } else {
-        savedCourse = await createCourse(courseData);
+        await createCourse(courseData);
         toast.success("Course created");
       }
 
@@ -127,7 +124,7 @@ const AdminCourses = () => {
       setForm(initialForm);
       setEditingId(null);
       fetchCoursesAndMentors();
-    } catch (err) {
+    } catch {
       toast.error("Failed to delete course");
       setForm(initialForm);
       setEditingId(null);

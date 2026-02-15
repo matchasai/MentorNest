@@ -3,7 +3,6 @@ import { toAbsoluteUrl } from "../../utils/url";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { FaBook, FaFilter, FaPencilAlt, FaPlus, FaSearch, FaTimes, FaTrash } from "react-icons/fa";
-import { useAuth } from "../../context/AuthContext";
 import { createModule, deleteModule, getAdminCourses, updateModule } from "../../services/adminService";
 import api from "../../services/api";
 
@@ -21,7 +20,6 @@ const validateModuleForm = (form) => {
 };
 
 const AdminModules = () => {
-  const { user } = useAuth();
   const [modules, setModules] = useState([]);
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +28,6 @@ const AdminModules = () => {
   const [search, setSearch] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [uploadingModuleResource, setUploadingModuleResource] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -56,7 +53,7 @@ const AdminModules = () => {
         }
       }
       setModules(allModules);
-    } catch (err) {
+    } catch {
       toast.error("Failed to load data");
     } finally {
       setLoading(false);
@@ -112,7 +109,7 @@ const AdminModules = () => {
       await deleteModule(moduleId);
       toast.success("Module deleted successfully!");
       fetchData(); // Refresh the list
-    } catch (err) {
+    } catch {
       toast.error("Failed to delete module.");
     }
   };
@@ -303,7 +300,6 @@ const AdminModules = () => {
                       return;
                     }
                     
-                    setUploadingModuleResource(true);
                     const formData = new FormData();
                     formData.append("file", file);
                     
@@ -314,10 +310,8 @@ const AdminModules = () => {
                       const resourceUrl = res.data.startsWith('http') ? res.data : toAbsoluteUrl(res.data);
                       setForm({...form, resourceUrl: resourceUrl});
                       toast.success("Resource uploaded successfully!");
-                    } catch (err) {
+                    } catch {
                       toast.error("Failed to upload resource");
-                    } finally {
-                      setUploadingModuleResource(false);
                     }
                   }}
                 />

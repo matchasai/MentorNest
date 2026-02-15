@@ -1,21 +1,19 @@
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import {
-  FaCertificate,
-  FaCheckCircle,
-  FaClock,
-  FaEdit,
-  FaEnvelope,
-  FaExclamationTriangle,
-  FaGraduationCap,
-  FaSave,
-  FaSpinner,
-  FaSync,
-  FaUser
+    FaCertificate,
+    FaCheckCircle,
+    FaClock,
+    FaEdit,
+    FaEnvelope,
+    FaExclamationTriangle,
+    FaGraduationCap,
+    FaSave,
+    FaSpinner,
+    FaUser
 } from "react-icons/fa";
 import CertificateStatus from "../components/CertificateStatus";
-import RealTimeIndicator from "../components/RealTimeIndicator";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { getMyCourses } from "../services/userService";
@@ -25,50 +23,38 @@ const Profile = () => {
   const [courses, setCourses] = useState([]);
   const [progress, setProgress] = useState({});
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [form, setForm] = useState({ name: "", password: "" });
   const [updating, setUpdating] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState(Date.now());
 
-  useEffect(() => {
-    loadProfileData();
-    
-    // Auto-refresh profile data every 2 minutes
-    const interval = setInterval(() => {
-      loadProfileData(false, true);
-    }, 120000);
-    
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadProfileData = async (isRefresh = false, isAutoRefresh = false) => {
-    if (isRefresh && !isAutoRefresh) setRefreshing(true);
+  const loadProfileData = useCallback(async (isRefresh = false, isAutoRefresh = false) => {
     if (!isRefresh && !isAutoRefresh) setLoading(true);
     
     try {
-      const coursesData = await getMyCourses();
-      setCourses(coursesData);
-      
-      // Load progress for each course with better error handling
-      const progressData = {};
-      
-      await Promise.all(
-        coursesData.map(async (course) => {
-          try {
-            // Get progress with validation
-            const progressRes = await api.get(`/student/courses/${course.id}/progress`);
-            const progressValue = Math.min(Math.max(progressRes.data, 0), 1);
-            progressData[course.id] = progressValue;
-          } catch (error) {
-            console.error(`Error loading progress for course ${course.id}:`, error);
-            progressData[course.id] = 0;
-          }
-        })
-      );
-      
-      setProgress(progressData);
-      setLastUpdate(Date.now());
+      // Only load courses if user is a STUDENT
+      if (user?.role === 'STUDENT') {
+        const coursesData = await getMyCourses();
+        setCourses(coursesData);
+        
+        // Load progress for each course with better error handling
+        const progressData = {};
+        
+        await Promise.all(
+          coursesData.map(async (course) => {
+            try {
+              // Get progress with validation
+              const progressRes = await api.get(`/student/courses/${course.id}/progress`);
+              const progressValue = Math.min(Math.max(progressRes.data, 0), 1);
+              progressData[course.id] = progressValue;
+            } catch (error) {
+              console.error(`Error loading progress for course ${course.id}:`, error);
+              progressData[course.id] = 0;
+            }
+          })
+        );
+        
+        setProgress(progressData);
+      }
       
       // Show success message if manually refreshing
       if (isRefresh && !isAutoRefresh) {
@@ -80,10 +66,20 @@ const Profile = () => {
       }
       console.error("Profile loading error:", error);
     } finally {
-      if (isRefresh && !isAutoRefresh) setRefreshing(false);
       if (!isRefresh && !isAutoRefresh) setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    loadProfileData();
+    
+    // Auto-refresh profile data every 2 minutes
+    const interval = setInterval(() => {
+      loadProfileData(false, true);
+    }, 120000);
+    
+    return () => clearInterval(interval);
+  }, [loadProfileData]);
 
   useEffect(() => {
     setForm((f) => ({ ...f, name: user?.name || user?.email || "" }));
@@ -97,7 +93,7 @@ const Profile = () => {
       toast.success("Profile updated successfully!");
       if (res.data.token) login(res.data.token);
       setEditing(false);
-    } catch (error) {
+    } catch {
       toast.error("Failed to update profile");
     } finally {
       setUpdating(false);
@@ -132,37 +128,14 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Real-time Status Indicator */}
-        <RealTimeIndicator 
-          isUpdating={refreshing}
-          lastUpdate={lastUpdate}
-          autoRefreshInterval={2}
-          onRefresh={() => loadProfileData(true)}
-          className="mb-4"
-        />
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex-1"></div>
-            <div className="flex-1 text-center">
-              <h1 className="text-4xl font-bold text-gray-800 mb-2">My Profile</h1>
-              <p className="text-gray-600">Manage your account and track your learning progress</p>
-            </div>
-            <div className="flex-1 flex justify-end">
-              <button
-                onClick={() => loadProfileData(true)}
-                disabled={loading || refreshing}
-                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-              >
-                <FaSync className={`${loading || refreshing ? 'animate-spin' : ''}`} />
-                <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
-              </button>
-            </div>
-          </div>
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">My Profile</h1>
+          <p className="text-gray-600">Manage your account and track your learning progress</p>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -174,42 +147,71 @@ const Profile = () => {
           >
             <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
               <div className="text-center mb-6">
-                <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FaUser className="text-white text-3xl" />
+                <div className="relative w-24 h-24 mx-auto mb-4">
+                  <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <FaUser className="text-white text-3xl" />
+                  </div>
+                  <motion.div
+                    className="absolute -bottom-1 -right-1 w-8 h-8 bg-green-500 rounded-full border-4 border-white flex items-center justify-center"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <FaCheckCircle className="text-white text-sm" />
+                  </motion.div>
                 </div>
                 <h2 className="text-xl font-semibold text-gray-800">{user?.name || user?.email}</h2>
-                <p className="text-gray-500 capitalize">{user?.role?.toLowerCase()}</p>
+                <p className="text-gray-500 capitalize flex items-center justify-center gap-2 mt-1">
+                  {user?.role?.toLowerCase() === 'student' && <FaGraduationCap className="text-blue-500" />}
+                  {user?.role?.toLowerCase()}
+                </p>
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <FaEnvelope className="text-gray-400" />
-                  <span className="text-gray-700">{user?.email}</span>
+                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <FaEnvelope className="text-blue-500" />
+                  <span className="text-gray-700 text-sm">{user?.email}</span>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <FaGraduationCap className="text-gray-400" />
-                  <span className="text-gray-700">{courses.length} Enrolled Courses</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <FaCertificate className="text-gray-400" />
-                  <span className="text-gray-700">
-                    {Object.values(progress).filter(p => p >= 1).length} Courses Completed
-                  </span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <FaCheckCircle className="text-gray-400" />
-                  <span className="text-gray-700">
-                    {Math.round(Object.values(progress).reduce((sum, p) => sum + p, 0) / Math.max(courses.length, 1) * 100)}% Average Progress
-                  </span>
-                </div>
-                {lastUpdate && (
-                  <div className="flex items-center space-x-3 pt-2 border-t border-gray-200">
-                    <FaClock className="text-gray-400" />
-                    <span className="text-gray-500 text-sm">
-                      Last updated: {new Date(lastUpdate).toLocaleTimeString()}
-                    </span>
-                  </div>
+                {user?.role === 'STUDENT' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg text-center border border-blue-100">
+                        <FaGraduationCap className="text-2xl text-blue-600 mx-auto mb-2" />
+                        <div className="text-2xl font-bold text-blue-600">{courses.length}</div>
+                        <div className="text-xs text-gray-600">Enrolled</div>
+                      </div>
+                      <div className="p-4 bg-gradient-to-br from-green-50 to-teal-50 rounded-lg text-center border border-green-100">
+                        <FaCertificate className="text-2xl text-green-600 mx-auto mb-2" />
+                        <div className="text-2xl font-bold text-green-600">
+                          {Object.values(progress).filter(p => p >= 1).length}
+                        </div>
+                        <div className="text-xs text-gray-600">Completed</div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border border-purple-100">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">Average Progress</span>
+                        <FaCheckCircle className="text-purple-500" />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 bg-gray-200 rounded-full h-3">
+                          <motion.div
+                            className="h-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-500"
+                            initial={{ width: 0 }}
+                            animate={{ 
+                              width: `${Math.round(Object.values(progress).reduce((sum, p) => sum + p, 0) / Math.max(courses.length, 1) * 100)}%` 
+                            }}
+                            transition={{ duration: 1, ease: "easeOut" }}
+                          ></motion.div>
+                        </div>
+                        <span className="text-lg font-bold text-purple-600">
+                          {Math.round(Object.values(progress).reduce((sum, p) => sum + p, 0) / Math.max(courses.length, 1) * 100)}%
+                        </span>
+                      </div>
+                    </div>
+                  </>
                 )}
+
               </div>
             </div>
 
@@ -285,88 +287,116 @@ const Profile = () => {
           </motion.div>
 
           {/* Courses and Certificates */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="lg:col-span-2"
-          >
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-                <FaGraduationCap className="mr-2 text-blue-600" />
-                My Learning Journey
-              </h3>
+          {user?.role === 'STUDENT' ? (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="lg:col-span-2"
+            >
+              <div className="bg-white rounded-2xl shadow-lg p-6">
+                <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                  <FaGraduationCap className="mr-2 text-blue-600" />
+                  My Learning Journey
+                </h3>
 
-              {courses.length === 0 ? (
-                <div className="text-center py-8">
-                  <FaExclamationTriangle className="text-4xl text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">You haven't enrolled in any courses yet.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {courses.map((course) => {
-                    const courseProgress = progress[course.id] || 0;
-                    
-                    return (
-                      <motion.div
-                        key={course.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex items-start gap-4">
-                          {/* Course Image */}
-                          {course.imageUrl && (
-                            <img
-                              src={course.imageUrl}
-                              alt={course.title}
-                              className="w-16 h-16 rounded-lg object-cover"
-                            />
-                          )}
-                          
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-3">
-                              <div>
-                                <h4 className="font-semibold text-gray-800">{course.title}</h4>
-                                <p className="text-sm text-gray-500">by {course.mentorName}</p>
+                {courses.length === 0 ? (
+                  <div className="text-center py-8">
+                    <FaExclamationTriangle className="text-4xl text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">You haven't enrolled in any courses yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {courses.map((course) => {
+                      const courseProgress = progress[course.id] || 0;
+                      
+                      return (
+                        <motion.div
+                          key={course.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-start gap-4">
+                            {/* Course Image */}
+                            {course.imageUrl && (
+                              <img
+                                src={course.imageUrl}
+                                alt={course.title}
+                                className="w-16 h-16 rounded-lg object-cover"
+                              />
+                            )}
+                            
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-3">
+                                <div>
+                                  <h4 className="font-semibold text-gray-800">{course.title}</h4>
+                                  <p className="text-sm text-gray-500">by {course.mentorName}</p>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  {courseProgress >= 1 ? (
+                                    <FaCheckCircle className="text-green-500" />
+                                  ) : (
+                                    <FaClock className="text-gray-400" />
+                                  )}
+                                  <span className={`text-sm font-medium ${getProgressColor(courseProgress * 100)}`}>
+                                    {Math.round(courseProgress * 100)}% Complete
+                                  </span>
+                                </div>
                               </div>
-                              <div className="flex items-center space-x-2">
-                                {courseProgress >= 1 ? (
-                                  <FaCheckCircle className="text-green-500" />
-                                ) : (
-                                  <FaClock className="text-gray-400" />
-                                )}
-                                <span className={`text-sm font-medium ${getProgressColor(courseProgress * 100)}`}>
-                                  {Math.round(courseProgress * 100)}% Complete
-                                </span>
+
+                              {/* Progress Bar */}
+                              <div className="mb-3">
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div
+                                    className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(courseProgress * 100)}`}
+                                    style={{ width: `${courseProgress * 100}%` }}
+                                  ></div>
+                                </div>
                               </div>
+
+                              {/* Certificate Status */}
+                              <CertificateStatus 
+                                courseId={course.id}
+                                courseTitle={course.title}
+                                progress={courseProgress}
+                                onRefresh={() => loadProfileData(true)}
+                              />
                             </div>
-
-                            {/* Progress Bar */}
-                            <div className="mb-3">
-                              <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div
-                                  className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(courseProgress * 100)}`}
-                                  style={{ width: `${courseProgress * 100}%` }}
-                                ></div>
-                              </div>
-                            </div>
-
-                            {/* Certificate Status */}
-                            <CertificateStatus 
-                              courseId={course.id}
-                              courseTitle={course.title}
-                              progress={courseProgress}
-                              onRefresh={() => loadProfileData(true)}
-                            />
                           </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="lg:col-span-2"
+            >
+              <div className="bg-white rounded-2xl shadow-lg p-6">
+                <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                  <FaUser className="mr-2 text-blue-600" />
+                  {user?.role === 'ADMIN' ? 'Admin Dashboard' : 'Mentor Dashboard'}
+                </h3>
+                <div className="text-center py-8">
+                  <p className="text-gray-600 mb-4">
+                    {user?.role === 'ADMIN' 
+                      ? 'Manage users, courses, and mentors from the Admin panel.' 
+                      : 'Manage your courses and students from the Mentor Dashboard.'}
+                  </p>
+                  <a
+                    href={user?.role === 'ADMIN' ? '/admin' : '/mentor-dashboard'}
+                    className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Go to {user?.role === 'ADMIN' ? 'Admin Panel' : 'Mentor Dashboard'}
+                  </a>
                 </div>
-              )}
-            </div>
-          </motion.div>
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
     </div>

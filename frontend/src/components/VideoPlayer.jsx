@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaCompress, FaExpand, FaPause, FaPlay, FaStepBackward, FaStepForward, FaVolumeMute, FaVolumeUp } from 'react-icons/fa';
 
 const VideoPlayer = ({ src, title, onProgress, onComplete }) => {
@@ -13,6 +13,114 @@ const VideoPlayer = ({ src, title, onProgress, onComplete }) => {
   const [showControls, setShowControls] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const controlsTimeoutRef = useRef(null);
+
+
+  const togglePlay = useCallback(() => {
+    const video = videoRef.current;
+    if (video.paused) {
+      video.play();
+      setIsPlaying(true);
+    } else {
+      video.pause();
+      setIsPlaying(false);
+    }
+    setShowControls(true);
+  }, []);
+
+  const skipBackward = useCallback(() => {
+    const video = videoRef.current;
+    video.currentTime = Math.max(0, video.currentTime - 10);
+    setShowControls(true);
+  }, []);
+
+  const skipForward = useCallback(() => {
+    const video = videoRef.current;
+    video.currentTime = Math.min(video.duration, video.currentTime + 10);
+    setShowControls(true);
+  }, []);
+
+  const handleSeek = (e) => {
+    const video = videoRef.current;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const width = rect.width;
+    const seekTime = (clickX / width) * duration;
+    video.currentTime = seekTime;
+    setShowControls(true);
+  };
+
+  const handleVolumeChange = (e) => {
+    const newVolume = parseFloat(e.target.value);
+    setVolume(newVolume);
+    videoRef.current.volume = newVolume;
+    setIsMuted(newVolume === 0);
+    setShowControls(true);
+  };
+
+  const adjustVolume = useCallback((delta) => {
+    const newVolume = Math.max(0, Math.min(1, volume + delta));
+    setVolume(newVolume);
+    videoRef.current.volume = newVolume;
+    setIsMuted(newVolume === 0);
+    setShowControls(true);
+  }, [volume]);
+
+  const toggleMute = useCallback(() => {
+    const video = videoRef.current;
+    if (isMuted) {
+      video.volume = volume > 0 ? volume : 0.5;
+      setIsMuted(false);
+      if (volume === 0) setVolume(0.5);
+    } else {
+      video.volume = 0;
+      setIsMuted(true);
+    }
+    setShowControls(true);
+  }, [isMuted, volume]);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!isFullscreen) {
+      enterFullscreen();
+    } else {
+      exitFullscreen();
+    }
+  }, [enterFullscreen, exitFullscreen, isFullscreen]);
+
+  const enterFullscreen = useCallback(() => {
+    const container = containerRef.current;
+    if (container.requestFullscreen) {
+      container.requestFullscreen();
+    } else if (container.webkitRequestFullscreen) {
+      container.webkitRequestFullscreen();
+    } else if (container.msRequestFullscreen) {
+      container.msRequestFullscreen();
+    }
+  }, []);
+
+  const exitFullscreen = useCallback(() => {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+  }, []);
+
+  const formatTime = (time) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  const handleMouseMove = () => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+  };
 
   useEffect(() => {
     const video = videoRef.current;
@@ -107,7 +215,18 @@ const VideoPlayer = ({ src, title, onProgress, onComplete }) => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onProgress, onComplete, isFullscreen]);
+  }, [
+    adjustVolume,
+    exitFullscreen,
+    isFullscreen,
+    onComplete,
+    onProgress,
+    skipBackward,
+    skipForward,
+    toggleFullscreen,
+    toggleMute,
+    togglePlay
+  ]);
 
   // Auto-hide controls
   useEffect(() => {
@@ -125,113 +244,6 @@ const VideoPlayer = ({ src, title, onProgress, onComplete }) => {
       }
     };
   }, [showControls, isPlaying]);
-
-  const togglePlay = () => {
-    const video = videoRef.current;
-    if (video.paused) {
-      video.play();
-      setIsPlaying(true);
-    } else {
-      video.pause();
-      setIsPlaying(false);
-    }
-    setShowControls(true);
-  };
-
-  const skipBackward = () => {
-    const video = videoRef.current;
-    video.currentTime = Math.max(0, video.currentTime - 10);
-    setShowControls(true);
-  };
-
-  const skipForward = () => {
-    const video = videoRef.current;
-    video.currentTime = Math.min(video.duration, video.currentTime + 10);
-    setShowControls(true);
-  };
-
-  const handleSeek = (e) => {
-    const video = videoRef.current;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const width = rect.width;
-    const seekTime = (clickX / width) * duration;
-    video.currentTime = seekTime;
-    setShowControls(true);
-  };
-
-  const handleVolumeChange = (e) => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    videoRef.current.volume = newVolume;
-    setIsMuted(newVolume === 0);
-    setShowControls(true);
-  };
-
-  const adjustVolume = (delta) => {
-    const newVolume = Math.max(0, Math.min(1, volume + delta));
-    setVolume(newVolume);
-    videoRef.current.volume = newVolume;
-    setIsMuted(newVolume === 0);
-    setShowControls(true);
-  };
-
-  const toggleMute = () => {
-    const video = videoRef.current;
-    if (isMuted) {
-      video.volume = volume > 0 ? volume : 0.5;
-      setIsMuted(false);
-      if (volume === 0) setVolume(0.5);
-    } else {
-      video.volume = 0;
-      setIsMuted(true);
-    }
-    setShowControls(true);
-  };
-
-  const toggleFullscreen = () => {
-    if (!isFullscreen) {
-      enterFullscreen();
-    } else {
-      exitFullscreen();
-    }
-  };
-
-  const enterFullscreen = () => {
-    const container = containerRef.current;
-    if (container.requestFullscreen) {
-      container.requestFullscreen();
-    } else if (container.webkitRequestFullscreen) {
-      container.webkitRequestFullscreen();
-    } else if (container.msRequestFullscreen) {
-      container.msRequestFullscreen();
-    }
-  };
-
-  const exitFullscreen = () => {
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    } else if (document.webkitExitFullscreen) {
-      document.webkitExitFullscreen();
-    } else if (document.msExitFullscreen) {
-      document.msExitFullscreen();
-    }
-  };
-
-  const formatTime = (time) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-  const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
-
-  const handleMouseMove = () => {
-    setShowControls(true);
-    if (controlsTimeoutRef.current) {
-      clearTimeout(controlsTimeoutRef.current);
-    }
-  };
 
   return (
     <div 

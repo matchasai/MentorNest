@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -29,21 +29,26 @@ const Dashboard = () => {
     recentActivity: []
   });
 
-  useEffect(() => {
-    if (user) {
-      fetchDashboardData();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       
-      // Check if user is authenticated
+      // Check if user is authenticated and is a STUDENT
       if (!user) {
         console.log('User not authenticated, skipping dashboard data fetch');
+        setLoading(false);
+        return;
+      }
+
+      // Only fetch course data for STUDENT users
+      if (user.role !== 'STUDENT') {
+        console.log('User is not a student, skipping course data fetch');
+        setDashboardData({
+          enrolledCourses: [],
+          completedCourses: 0,
+          certificates: 0,
+          recentActivity: []
+        });
         setLoading(false);
         return;
       }
@@ -120,7 +125,15 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchDashboardData();
+    } else {
+      setLoading(false);
+    }
+  }, [user, fetchDashboardData]);
 
   const fadeIn = {
     hidden: { opacity: 0, y: 20 },
@@ -175,6 +188,44 @@ const Dashboard = () => {
               className="inline-block px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105"
             >
               Go to Login
+            </Link>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Check if user is not a STUDENT - redirect to appropriate dashboard
+  if (user.role !== 'STUDENT') {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh] bg-gradient-to-br from-blue-50 to-purple-50">
+        <motion.div 
+          className="flex flex-col items-center gap-6 text-center p-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <motion.div
+            className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center"
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            transition={{ duration: 0.3 }}
+          >
+            <FaUsers className="text-white text-2xl" />
+          </motion.div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              {user.role === 'ADMIN' ? 'Admin Dashboard' : 'Mentor Dashboard'}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              {user.role === 'ADMIN' 
+                ? 'Access the admin panel to manage the platform' 
+                : 'Access your mentor dashboard to manage courses and students'}
+            </p>
+            <Link
+              to={user.role === 'ADMIN' ? '/admin' : '/mentor-dashboard'}
+              className="inline-block px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+            >
+              Go to {user.role === 'ADMIN' ? 'Admin Panel' : 'Mentor Dashboard'}
             </Link>
           </div>
         </motion.div>
@@ -319,30 +370,49 @@ const Dashboard = () => {
             
             {dashboardData.enrolledCourses.length > 0 ? (
               <div className="space-y-4">
-                {dashboardData.enrolledCourses.slice(0, 2).map((course, index) => (
-                  <motion.div 
+                {dashboardData.enrolledCourses.slice(0, 3).map((course, index) => (
+                  <Link 
                     key={index}
-                    className="p-4 bg-gradient-to-r from-green-50 to-teal-50 rounded-xl border border-green-100"
-                    whileHover={{ scale: 1.02 }}
+                    to={`/course/${course.id}`}
+                    className="block"
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-bold text-gray-800">{course.title || 'Course Title'}</h3>
-                        <p className="text-gray-600 text-sm">Progress: {course.progress || '0'}%</p>
+                    <motion.div 
+                      className="p-4 bg-gradient-to-r from-green-50 to-teal-50 rounded-xl border border-green-100 hover:shadow-lg transition-all"
+                      whileHover={{ scale: 1.02, x: 5 }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-bold text-gray-800">{course.title || 'Course Title'}</h3>
+                          <div className="flex items-center gap-2 mt-2">
+                            <div className="flex-1 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-gradient-to-r from-green-500 to-teal-600 h-2 rounded-full transition-all"
+                                style={{ width: `${course.progress || 0}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-sm font-medium text-green-600">{course.progress || 0}%</span>
+                          </div>
+                        </div>
+                        <FaArrowRight className="text-green-600 ml-4" />
                       </div>
-                      <FaArrowRight className="text-green-600" />
-                    </div>
-                  </motion.div>
+                    </motion.div>
+                  </Link>
                 ))}
                 <Link
                   to="/courses"
-                  className="inline-block w-full text-center px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300"
+                  className="inline-block w-full text-center px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02]"
                 >
                   View All Courses
                 </Link>
               </div>
             ) : (
               <div className="text-center py-6">
+                <motion.div
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <FaBookOpen className="text-6xl text-green-500 mx-auto mb-4 opacity-50" />
+                </motion.div>
                 <p className="text-gray-600 mb-4">No courses enrolled yet</p>
                 <Link
                   to="/courses"
@@ -362,33 +432,56 @@ const Dashboard = () => {
             <div className="flex items-center gap-4 mb-6">
               <motion.div 
                 className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center"
-                animate={{ rotateY: [0, 360] }}
+                animate={{ rotateY: [0, 180, 360] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               >
                 <FaAward className="text-white text-xl" />
               </motion.div>
-              <h2 className="text-2xl font-bold text-gray-800">Recent Achievements</h2>
+              <h2 className="text-2xl font-bold text-gray-800">Achievements</h2>
             </div>
             
-            {dashboardData.certificates > 0 ? (
+            {dashboardData.certificates > 0 || dashboardData.completedCourses > 0 ? (
               <div className="space-y-4">
-                <motion.div 
-                  className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-100"
-                  whileHover={{ scale: 1.02 }}
-                >
-                  <div className="flex items-center gap-3">
-                    <FaStar className="text-yellow-600" />
-                    <div>
-                      <h3 className="font-bold text-gray-800">
-                        {dashboardData.certificates === 1 ? '1 Certificate Earned' : `${dashboardData.certificates} Certificates Earned`}
-                      </h3>
-                      <p className="text-gray-600 text-sm">Congratulations on your achievements!</p>
+                {dashboardData.completedCourses > 0 && (
+                  <motion.div 
+                    className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-100"
+                    whileHover={{ scale: 1.02 }}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <FaTrophy className="text-yellow-600 text-2xl" />
+                      <div>
+                        <h3 className="font-bold text-gray-800">
+                          {dashboardData.completedCourses} {dashboardData.completedCourses === 1 ? 'Course' : 'Courses'} Completed
+                        </h3>
+                        <p className="text-gray-600 text-sm">Keep up the great work!</p>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
+                )}
+                {dashboardData.certificates > 0 && (
+                  <motion.div 
+                    className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-100"
+                    whileHover={{ scale: 1.02 }}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <FaStar className="text-purple-600 text-2xl" />
+                      <div>
+                        <h3 className="font-bold text-gray-800">
+                          {dashboardData.certificates} {dashboardData.certificates === 1 ? 'Certificate' : 'Certificates'} Earned
+                        </h3>
+                        <p className="text-gray-600 text-sm">Building your portfolio!</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
                 <Link
                   to="/certificates"
-                  className="inline-block w-full text-center px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300"
+                  className="inline-block w-full text-center px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02]"
                 >
                   View All Certificates
                 </Link>
@@ -399,10 +492,10 @@ const Dashboard = () => {
                   animate={{ rotate: [0, 10, -10, 0] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  <FaTrophy className="text-6xl text-yellow-500 mx-auto mb-4" />
+                  <FaTrophy className="text-6xl text-yellow-500 mx-auto mb-4 opacity-50" />
                 </motion.div>
-                <p className="text-gray-600 mb-4">Complete courses to earn certificates!</p>
-                <div className="text-yellow-600 font-medium">Your achievements will appear here ✨</div>
+                <p className="text-gray-600 mb-2">Complete courses to earn certificates!</p>
+                <div className="text-yellow-600 font-medium text-sm">Your achievements will appear here ✨</div>
               </div>
             )}
           </motion.div>
@@ -423,34 +516,45 @@ const Dashboard = () => {
             >
               <FaChartLine className="text-white text-xl" />
             </motion.div>
-            <h2 className="text-2xl font-bold text-gray-800">Your Learning Journey</h2>
+            <h2 className="text-2xl font-bold text-gray-800">Quick Actions</h2>
           </div>
           
-          <div className="text-center py-8">
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Link
+              to="/courses"
+              className="group p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100 hover:shadow-lg transition-all duration-300 transform hover:scale-105"
             >
-              <FaUsers className="text-6xl text-purple-500 mx-auto mb-4" />
-            </motion.div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Ready to Start Learning?</h3>
-            <p className="text-gray-600 mb-6">
-              Join thousands of students already transforming their careers with MentorNest!
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/courses"
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105"
-              >
-                Explore Courses
-              </Link>
-              <Link
-                to="/mentors"
-                className="px-6 py-3 bg-transparent border-2 border-purple-600 text-purple-600 rounded-xl font-medium hover:bg-purple-600 hover:text-white transition-all duration-300 transform hover:scale-105"
-              >
-                Find Mentors
-              </Link>
-            </div>
+              <div className="flex items-center justify-between mb-3">
+                <FaBookOpen className="text-3xl text-blue-600" />
+                <FaArrowRight className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-800 mb-1">Explore Courses</h3>
+              <p className="text-sm text-gray-600">Discover new learning paths</p>
+            </Link>
+
+            <Link
+              to="/mentors"
+              className="group p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-100 hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <FaUsers className="text-3xl text-purple-600" />
+                <FaArrowRight className="text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-800 mb-1">Find Mentors</h3>
+              <p className="text-sm text-gray-600">Connect with expert instructors</p>
+            </Link>
+
+            <Link
+              to="/profile"
+              className="group p-6 bg-gradient-to-br from-green-50 to-teal-50 rounded-xl border border-green-100 hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <FaGraduationCap className="text-3xl text-green-600" />
+                <FaArrowRight className="text-green-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-800 mb-1">My Profile</h3>
+              <p className="text-sm text-gray-600">Track your progress</p>
+            </Link>
           </div>
         </motion.div>
       </div>

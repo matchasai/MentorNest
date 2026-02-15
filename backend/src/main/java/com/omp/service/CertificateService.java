@@ -14,6 +14,8 @@ import java.util.UUID;
 
 import javax.imageio.ImageIO;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.omp.entity.Course;
@@ -26,13 +28,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CertificateService {
 
+    private static final Logger logger = LoggerFactory.getLogger(CertificateService.class);
+
     private final FileStorageService fileStorageService;
     private final com.omp.repository.MentorRepository mentorRepository;
     private final com.omp.repository.UserRepository userRepository;
 
     public String generateCertificate(User user, Course course, Enrollment enrollment) {
         try {
-            System.out.println("Generating certificate for user: " + user.getName() + ", course: " + course.getTitle());
+            logger.info("Generating certificate for user: {}, course: {}", user.getName(), course.getTitle());
 
             // Create certificate image
             BufferedImage certificate = createCertificateImage(user, course, enrollment);
@@ -46,20 +50,18 @@ public class CertificateService {
             String timestamp = String.valueOf(System.currentTimeMillis());
             String fileName = "certificate_" + user.getId() + "_" + course.getId() + "_" + timestamp + ".png";
 
-            System.out.println("Saving certificate as: " + fileName);
+            logger.debug("Saving certificate as: {}", fileName);
 
             // Save to file storage
             String fileUrl = fileStorageService.storeCertificate(imageBytes, fileName);
 
-            System.out.println("Certificate saved successfully at: " + fileUrl);
+            logger.info("Certificate saved at: {}", fileUrl);
             return fileUrl;
         } catch (IOException e) {
-            System.err.println("Failed to generate certificate: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Failed to generate certificate", e);
             throw new RuntimeException("Failed to generate certificate", e);
         } catch (Exception e) {
-            System.err.println("Unexpected error generating certificate: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Unexpected error generating certificate", e);
             throw new RuntimeException("Failed to generate certificate", e);
         }
     }

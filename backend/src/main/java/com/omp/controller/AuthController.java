@@ -25,6 +25,7 @@ import com.omp.dto.RegisterRequest;
 import com.omp.dto.UserDTO;
 import com.omp.entity.User;
 import com.omp.repository.UserRepository;
+import com.omp.service.EmailService;
 import com.omp.service.UserService;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -39,6 +40,7 @@ public class AuthController {
     private final UserService userService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request,
@@ -146,7 +148,101 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+@PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<String, String> request) {
+        try {
+            String email = request.get("email");
+            
+            if (email == null || email.trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Email is required"));
+            }
 
+            var userOpt = userRepository.findByEmail(email);
+            
+            if (userOpt.isEmpty()) {
+                // Don't reveal that user doesn't exist for security
+                return ResponseEntity.ok()
+                    .body(Map.of("message", "If an account exists with this email, you will receive a password reset link."));
+            }
+
+            var user = userOpt.get();
+            
+            // Generate reset token
+            String resetToken = java.util.UUID.randomUUID().toString();
+            user.setResetToken(resetToken);
+            user.setResetTokenExpiry(java.time.LocalDateTime.now().plusHours(1));
+            userRepository.save(user);
+
+            // Send email
+            emailService.sendPasswordResetEmail(user.getEmail(), resetToken, user.getName());
+
+            return ResponseEntity.ok()
+                .body(Map.of("message", "If an account exists with this email, you will receive a password reset link."));
+
+        } catch (Exception e) {
+            logger.error("Error in forgot password: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", "Failed to process request"));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody Map<String, String> request) {
+        try {
+            String token = request.get("token");
+            String newPassword = request.get("password");
+
+            if (token == null || newPassword == null || token.trim().isEmpty() || newPassword.trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Token and password are required"));
+            }
+
+            if (newPassword.length() < 6) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Password must be at least 6 characters long"));
+            }
+
+            // Find user with the reset token
+            var users = userRepository.findAll();
+            var userOpt = users.stream()
+                .filter(u -> token.equals(u.getResetToken()))
+                .findFirst();
+
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Invalid or expired reset token"));
+            }
+
+            var user = userOpt.get();
+
+            // Check if token is expired
+            if (user.getResetTokenExpiry() == null || 
+                user.getResetTokenExpiry().isBefore(java.time.LocalDateTime.now())) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Reset token has expired"));
+            }
+
+            // Reset password
+            user.setPassword(passwordEncoder.encode(newPassword));
+            user.setResetToken(null);
+            user.setResetTokenExpiry(null);
+            userRepository.save(user);
+
+            // Send confirmation email
+            emailService.sendPasswordResetConfirmation(user.getEmail(), user.getName());
+
+            return ResponseEntity.ok()
+                .body(Map.of("message", "Password has been reset successfully"));
+
+        } catch (Exception e) {
+            logger.error("Error in reset password: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", "Failed to reset password"));
+        }
+    }
+
+    
     private void setAuthCookies(HttpServletResponse response, AuthResponse authResponse) {
         ResponseCookie jwtCookie = ResponseCookie.from("jwt", authResponse.getToken())
                 .httpOnly(true)

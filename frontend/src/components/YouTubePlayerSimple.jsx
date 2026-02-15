@@ -32,16 +32,14 @@ const YouTubePlayerSimple = ({ videoUrl, title }) => {
   const embedUrl = `https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=${window.location.origin}&rel=0&modestbranding=1&iv_load_policy=3`;
 
   return (
-    <div className="relative group bg-black rounded-lg overflow-hidden">
-      <iframe
-        src={embedUrl}
-        title={title}
-        className="w-full h-96 rounded-lg"
-        frameBorder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowFullScreen
-      />
-    </div>
+    <iframe
+      src={embedUrl}
+      title={title}
+      className="absolute inset-0 w-full h-full"
+      frameBorder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowFullScreen
+    />
   );
 };
 

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import {
     FaArrowLeft,
@@ -33,31 +33,30 @@ const Certificates = () => {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(Date.now());
 
-  useEffect(() => {
-    loadCertificatesData();
-  }, []);
-
-  const loadCertificatesData = async (isRefresh = false) => {
+  const loadCertificatesData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     if (!isRefresh) setLoading(true);
     
     try {
-      const coursesData = await getMyCourses();
-      setCourses(coursesData);
+      // Only load courses if user is a STUDENT
+      if (user?.role === 'STUDENT') {
+        const coursesData = await getMyCourses();
+        setCourses(coursesData);
 
-      // Load progress for each course
-      const progressData = {};
-      await Promise.all(
-        coursesData.map(async (course) => {
-          try {
-            const progressRes = await api.get(`/student/courses/${course.id}/progress`);
-            progressData[course.id] = Math.min(Math.max(progressRes.data, 0), 1);
-          } catch {
-            progressData[course.id] = 0;
-          }
-        })
-      );
-      setProgress(progressData);
+        // Load progress for each course
+        const progressData = {};
+        await Promise.all(
+          coursesData.map(async (course) => {
+            try {
+              const progressRes = await api.get(`/student/courses/${course.id}/progress`);
+              progressData[course.id] = Math.min(Math.max(progressRes.data, 0), 1);
+            } catch {
+              progressData[course.id] = 0;
+            }
+          })
+        );
+        setProgress(progressData);
+      }
       setLastUpdate(Date.now());
       
       if (isRefresh) {
@@ -70,7 +69,11 @@ const Certificates = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    loadCertificatesData();
+  }, [loadCertificatesData]);
 
   const handleRefresh = () => {
     loadCertificatesData(true);
@@ -127,6 +130,28 @@ const Certificates = () => {
         <div className="text-center">
           <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
           <p className="text-lg text-gray-600">Loading your certificates...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if user is not a STUDENT
+  if (user?.role !== 'STUDENT') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center p-8">
+          <FaExclamationTriangle className="text-4xl text-yellow-600 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Certificates Not Available</h2>
+          <p className="text-lg text-gray-600 mb-6">
+            Certificates are only available for students who complete courses.
+          </p>
+          <button
+            onClick={() => navigate(user?.role === 'ADMIN' ? '/admin' : '/mentor-dashboard')}
+            className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <FaArrowLeft />
+            Go to {user?.role === 'ADMIN' ? 'Admin Panel' : 'Mentor Dashboard'}
+          </button>
         </div>
       </div>
     );

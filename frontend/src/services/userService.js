@@ -1,11 +1,5 @@
 import api from "./api";
 
-// Fetch user profile
-export async function getProfile() {
-  const res = await api.get("/auth/me");
-  return res.data;
-}
-
 // Fetch enrolled courses
 export async function getMyCourses() {
   const res = await api.get("/student/my-courses");
@@ -59,7 +53,7 @@ export async function getUserStats() {
         try {
           await api.get(`/student/courses/${course.id}/certificate`);
           return 1;
-        } catch (error) {
+        } catch {
           return 0;
         }
       }

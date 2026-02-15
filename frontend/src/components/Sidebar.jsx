@@ -1,6 +1,6 @@
 // Sidebar component for Admin Panel navigation
 import React from "react";
-import { FaBook, FaBookOpen, FaUsers, FaUserTie } from "react-icons/fa";
+import { FaBook, FaBookOpen, FaChartLine, FaUsers, FaUserTie } from "react-icons/fa";
 import { NavLink } from "react-router-dom";
 
 const Sidebar = () => {
@@ -28,6 +28,10 @@ const Sidebar = () => {
         <NavLink to="/admin/modules" className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClasses : ''}`}>
           <FaBook />
           <span>Modules</span>
+        </NavLink>
+        <NavLink to="/admin/student-progress" className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClasses : ''}`}>
+          <FaChartLine />
+          <span>Student Progress</span>
         </NavLink>
       </nav>
     </aside>

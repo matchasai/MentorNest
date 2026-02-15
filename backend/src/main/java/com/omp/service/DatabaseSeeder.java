@@ -1,5 +1,6 @@
 package com.omp.service;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +14,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 
 @Component
+@Profile("dev")
 @RequiredArgsConstructor
 public class DatabaseSeeder {
         private final UserRepository userRepository;

@@ -23,7 +23,21 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      'no-unused-vars': ['error', { varsIgnorePattern: '^(motion|[A-Z_])' }],
+    },
+  },
+  {
+    files: ['tailwind.config.js'],
+    languageOptions: {
+      globals: globals.node,
+      sourceType: 'script',
+    },
+  },
+  {
+    files: ['postcss.config.js', 'vite.config.js'],
+    languageOptions: {
+      globals: globals.node,
+      sourceType: 'module',
     },
   },
 ])

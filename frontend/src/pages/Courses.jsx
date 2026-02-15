@@ -50,7 +50,7 @@ const Courses = () => {
   useEffect(() => {
     getCourses()
       .then(setCourses)
-      .catch((err) => {
+      .catch(() => {
         setError("Failed to load courses");
         toast.error("Failed to load courses");
       })
@@ -61,12 +61,12 @@ const Courses = () => {
 
   const filtered = courses.filter(
     (c) => {
-      const matchesSearch = c.title.toLowerCase().includes(search.toLowerCase()) ||
-                           c.mentorName.toLowerCase().includes(search.toLowerCase()) ||
-                           c.description.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch = (c.title || "").toLowerCase().includes(search.toLowerCase()) ||
+                           (c.mentorName || "").toLowerCase().includes(search.toLowerCase()) ||
+                           (c.description || "").toLowerCase().includes(search.toLowerCase());
       const matchesCategory = selectedCategory === "all" || 
-                             c.title.toLowerCase().includes(selectedCategory.toLowerCase()) ||
-                             c.description.toLowerCase().includes(selectedCategory.toLowerCase());
+                             (c.title || "").toLowerCase().includes(selectedCategory.toLowerCase()) ||
+                             (c.description || "").toLowerCase().includes(selectedCategory.toLowerCase());
       return matchesSearch && matchesCategory;
     }
   );
@@ -222,7 +222,7 @@ const Courses = () => {
                     ) : null}
                     <div className={`${course.imageUrl ? 'hidden' : 'flex'} w-full h-full bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 items-center justify-center relative`}>
                       <div className="text-white text-4xl font-bold">
-                        {course.title.split(" ").map(word => word[0]).join("").substring(0, 3)}
+                        {course.title ? course.title.split(" ").map(word => word[0]).join("").substring(0, 3) : "???"}
                       </div>
                       <div className="absolute inset-0 bg-black bg-opacity-20"></div>
                     </div>
@@ -255,10 +255,10 @@ const Courses = () => {
                         />
                       ) : null}
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-lg ${mentorColors[idx % mentorColors.length]} ${course.mentorImageUrl ? 'hidden' : ''}`}>
-                        {course.mentorName.split(" ").map(n => n[0]).join("")}
+                        {course.mentorName ? course.mentorName.split(" ").map(n => n[0]).join("") : "?"}
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-semibold text-gray-800 text-sm">{course.mentorName}</span>
+                        <span className="font-semibold text-gray-800 text-sm">{course.mentorName || "Unknown Mentor"}</span>
                         <span className="text-xs text-blue-600 flex items-center gap-1">
                           <FaUser className="w-3 h-3" />
                           Expert Mentor
@@ -268,12 +268,12 @@ const Courses = () => {
 
                     {/* Course Title */}
                     <h2 className="text-xl font-bold mb-3 text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-2 leading-tight">
-                      {course.title}
+                      {course.title || "Untitled Course"}
                     </h2>
 
                     {/* Course Description */}
                     <p className="text-gray-600 mb-4 line-clamp-3 text-sm leading-relaxed">
-                      {course.description}
+                      {course.description || "No description available."}
                     </p>
 
                     {/* Course Stats */}

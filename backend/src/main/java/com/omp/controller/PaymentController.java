@@ -52,23 +52,50 @@ public class PaymentController {
     @PostMapping("/razorpay/order")
     public ResponseEntity<?> createRazorpayOrder(@RequestBody RazorpayOrderRequest req, Principal principal) {
         try {
+            logger.info("Creating Razorpay order for course: {}", req.getCourseId());
+
+            // Validate principal
+            if (principal == null) {
+                logger.error("Principal is null - user not authenticated");
+                return ResponseEntity.status(401).body(Map.of("error", "User not authenticated"));
+            }
+
             String userId = getUserId(principal);
+            logger.info("User ID: {}", userId);
+
+            // Validate courseId
+            if (req.getCourseId() == null || req.getCourseId().isEmpty()) {
+                logger.error("Course ID is missing");
+                return ResponseEntity.badRequest().body(Map.of("error", "Course ID is required"));
+            }
+
             // Use course price if amount not supplied
             if (req.getAmountPaise() <= 0) {
+                logger.info("Amount not provided, fetching from course");
                 PaymentDTO draft = paymentService.initiatePayment(userId, req.getCourseId(), "RAZORPAY");
                 long paise = Math.round(draft.getAmount() * 100);
                 req.setAmountPaise(paise);
+                logger.info("Amount set to: {} paise", paise);
             }
-            String receipt = "rcpt_" + userId + "_" + req.getCourseId();
+
+            // Generate receipt within Razorpay's 40 char limit
+            // Format: rcpt_<first8ofuserid>_<first8ofcourseid>_<timestamp>
+            String shortUserId = userId.substring(0, Math.min(8, userId.length()));
+            String shortCourseId = req.getCourseId().substring(0, Math.min(8, req.getCourseId().length()));
+            String receipt = "rcpt_" + shortUserId + "_" + shortCourseId;
+            logger.info("Generated receipt (length {}): {}", receipt.length(), receipt);
+
             Map<String, Object> order = razorpayService.createOrder(req.getAmountPaise(),
                     req.getCurrency() == null ? "INR" : req.getCurrency(),
                     receipt,
                     true);
             order.put("keyId", razorpayProperties.getKeyId());
+            logger.info("Order created successfully: {}", order.get("id"));
             return ResponseEntity.ok(order);
         } catch (Exception e) {
             logger.error("Failed to create Razorpay order", e);
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            String errorMsg = e.getMessage() != null ? e.getMessage() : "Failed to create order";
+            return ResponseEntity.badRequest().body(Map.of("error", errorMsg));
         }
     }
 
@@ -84,9 +111,40 @@ public class PaymentController {
             }
             PaymentDTO payment = paymentService.completePaymentByCourse(userId, req.getCourseId(),
                     req.getPaymentMethod(), "COMPLETED");
-            return ResponseEntity.ok(payment);
+
+            // Auto-enroll student after successful payment
+            try {
+                studentService.enroll(userId, req.getCourseId());
+                logger.info("Student {} successfully enrolled in course {} after payment", userId, req.getCourseId());
+            } catch (IllegalArgumentException e) {
+                // Student might already be enrolled, log but don't fail
+                logger.warn("Student {} already enrolled in course {}: {}", userId, req.getCourseId(), e.getMessage());
+            }
+
+            return ResponseEntity.ok(Map.of("success", true, "payment", payment));
         } catch (Exception e) {
             logger.error("Failed to verify Razorpay payment", e);
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // Free enrollment endpoint
+    @PostMapping("/enroll-free/{courseId}")
+    public ResponseEntity<?> enrollFree(@PathVariable String courseId, Principal principal) {
+        try {
+            String userId = getUserId(principal);
+            logger.info("Processing free enrollment for user {} in course {}", userId, courseId);
+
+            // Mark payment as completed (zero amount)
+            PaymentDTO payment = paymentService.completePaymentByCourse(userId, courseId, "FREE", "COMPLETED");
+
+            // Enroll student
+            studentService.enroll(userId, courseId);
+            logger.info("Student {} successfully enrolled in free course {}", userId, courseId);
+
+            return ResponseEntity.ok(Map.of("success", true, "payment", payment));
+        } catch (Exception e) {
+            logger.error("Failed to process free enrollment", e);
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }

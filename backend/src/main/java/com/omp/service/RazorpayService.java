@@ -33,6 +33,22 @@ public class RazorpayService {
 
     public Map<String, Object> createOrder(long amountPaise, String currency, String receipt, boolean capture)
             throws Exception {
+        // Validate configuration first
+        if (properties.getKeyId() == null || properties.getKeyId().isEmpty()) {
+            log.error("Razorpay KEY_ID is not configured");
+            throw new IllegalStateException(
+                    "Razorpay KEY_ID is not configured. Please set RAZORPAY_KEY_ID environment variable.");
+        }
+
+        if (properties.getKeySecret() == null || properties.getKeySecret().isEmpty()) {
+            log.error("Razorpay KEY_SECRET is not configured");
+            throw new IllegalStateException(
+                    "Razorpay KEY_SECRET is not configured. Please set RAZORPAY_KEY_SECRET environment variable.");
+        }
+
+        log.info("Razorpay configuration validated. KeyId prefix: {}",
+                properties.getKeyId().substring(0, Math.min(5, properties.getKeyId().length())));
+
         String url = "https://api.razorpay.com/v1/orders";
 
         Map<String, Object> payload = new HashMap<>();
@@ -42,6 +58,7 @@ public class RazorpayService {
         payload.put("payment_capture", capture ? 1 : 0);
 
         String body = objectMapper.writeValueAsString(payload);
+        log.info("Razorpay payload: {}", body);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
@@ -56,11 +73,12 @@ public class RazorpayService {
 
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             log.error("Razorpay order create failed: status={}, body={}", response.statusCode(), response.body());
-            throw new IllegalStateException("Failed to create Razorpay order");
+            throw new IllegalStateException("Failed to create Razorpay order: " + response.body());
         }
 
         @SuppressWarnings("unchecked")
         Map<String, Object> result = objectMapper.readValue(response.body(), Map.class);
+        log.info("Razorpay order created: {}", result.get("id"));
         return result;
     }
 

@@ -1,76 +1,94 @@
-// Login page for MentorNest with modern form
-import { motion } from "framer-motion";
-import { useState } from "react";
+import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { FaEnvelope, FaEye, FaEyeSlash, FaGraduationCap, FaLock } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { login as loginApi } from "../services/authService";
+import { FaEnvelope, FaGraduationCap, FaArrowLeft } from "react-icons/fa";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import api from "../services/api";
 
-const Login = () => {
+const ForgotPassword = () => {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const [error, setError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
     try {
-      const data = await loginApi(email, password);
-      await login(data.token);
-      toast.success("Login successful!");
-      if (data.role === "ADMIN") {
-        navigate("/admin");
-      } else {
-        navigate("/dashboard");
-      }
-    } catch {
-      setError("Invalid email or password");
+      const response = await api.post("/auth/forgot-password", { email });
+      toast.success(response.data.message || "Password reset link sent to your email!");
+      setSubmitted(true);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to send reset link. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  if (submitted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 p-8">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="bg-white rounded-3xl shadow-2xl p-10 max-w-md w-full text-center"
+        >
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <FaEnvelope className="text-3xl text-green-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Check Your Email</h2>
+          <p className="text-gray-600 mb-8">
+            If an account exists with <strong>{email}</strong>, you will receive a password reset link shortly.
+          </p>
+          <p className="text-sm text-gray-500 mb-6">
+            Didn't receive the email? Check your spam folder or try again.
+          </p>
+          <Link
+            to="/login"
+            className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-semibold"
+          >
+            <FaArrowLeft /> Back to Login
+          </Link>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
+    <div className="min-h-screen flex bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500">
       {/* Left Side - Branding */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
-        className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-indigo-700 p-12 flex-col justify-center items-center text-white relative overflow-hidden"
+        className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-600 to-blue-700 p-12 flex-col justify-center items-center text-white relative overflow-hidden"
       >
         {/* Animated background circles */}
         <div className="absolute top-20 left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        
+
         <div className="relative z-10 text-center">
           <FaGraduationCap className="text-8xl mb-8 mx-auto" />
-          <h1 className="text-5xl font-bold mb-4">MentorNest</h1>
-          <p className="text-xl text-blue-100 mb-8">Your Gateway to Excellence</p>
+          <h1 className="text-5xl font-bold mb-4">Forgot Password?</h1>
+          <p className="text-xl text-blue-100 mb-8">No worries, we'll help you reset it!</p>
           <div className="space-y-4 text-left max-w-md">
             <div className="flex items-center gap-3">
               <div className="w-2 h-2 bg-white rounded-full"></div>
-              <p className="text-lg">Learn from industry experts</p>
+              <p className="text-lg">Enter your email address</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-2 h-2 bg-white rounded-full"></div>
-              <p className="text-lg">Track your progress in real-time</p>
+              <p className="text-lg">Receive a secure reset link</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-2 h-2 bg-white rounded-full"></div>
-              <p className="text-lg">Get certified on completion</p>
+              <p className="text-lg">Create a new password</p>
             </div>
           </div>
         </div>
       </motion.div>
 
-      {/* Right Side - Login Form */}
+      {/* Right Side - Form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -86,11 +104,11 @@ const Login = () => {
             </div>
 
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back!</h2>
-              <p className="text-gray-500">Sign in to continue your learning journey</p>
+              <h2 className="text-3xl font-bold text-gray-800 mb-2">Reset Password</h2>
+              <p className="text-gray-500">Enter your email to receive a reset link</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email Input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
@@ -100,57 +118,13 @@ const Login = () => {
                     type="email"
                     className="w-full border border-gray-300 rounded-xl pl-11 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
                     value={email}
-                    onChange={e => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                     autoFocus
                     placeholder="Enter your email"
                   />
                 </div>
               </div>
-
-              {/* Password Input */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                <div className="relative">
-                  <FaLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    className="w-full border border-gray-300 rounded-xl pl-11 pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-gray-50 hover:bg-white"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    required
-                    placeholder="Enter your password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <FaEyeSlash /> : <FaEye />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Remember & Forgot */}
-              <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500" />
-                  <span className="text-gray-600">Remember me</span>
-                </label>
-                <Link to="/forgot-password" className="text-indigo-600 hover:text-indigo-700 font-medium">
-                  Forgot password?
-                </Link>
-              </div>
-
-              {error && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm"
-                >
-                  {error}
-                </motion.div>
-              )}
 
               {/* Submit Button */}
               <button
@@ -164,9 +138,9 @@ const Login = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    Signing in...
+                    Sending...
                   </span>
-                ) : "Sign In"}
+                ) : "Send Reset Link"}
               </button>
             </form>
 
@@ -177,12 +151,18 @@ const Login = () => {
               <div className="flex-1 border-t border-gray-300"></div>
             </div>
 
-            {/* Sign Up Link */}
-            <div className="text-center">
-              <p className="text-gray-600">
+            {/* Back to Login */}
+            <div className="text-center space-y-2">
+              <Link
+                to="/login"
+                className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-semibold"
+              >
+                <FaArrowLeft /> Back to Login
+              </Link>
+              <p className="text-sm text-gray-600">
                 Don't have an account?{" "}
                 <Link to="/register" className="text-indigo-600 hover:text-indigo-700 font-semibold">
-                  Sign up now
+                  Sign up
                 </Link>
               </p>
             </div>
@@ -193,4 +173,4 @@ const Login = () => {
   );
 };
 
-export default Login; 
+export default ForgotPassword;

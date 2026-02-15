@@ -32,6 +32,10 @@ public class User {
     @Builder.Default
     private boolean active = true;
 
+    private String resetToken;
+    
+    private LocalDateTime resetTokenExpiry;
+
     public boolean isActive() {
         return active;
     }
